@@ -1,0 +1,1 @@
+- [OSS 发布核验陷阱](project-oss-verify-traps.md) — release zip 内 pyc 泄露构建机路径；typeset/scan 死代码残留在 Swift 字典/超时分支
