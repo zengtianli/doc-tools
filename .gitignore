@@ -25,6 +25,5 @@ backend/__pycache__/
 *.zip
 catalog.yaml
 
-# 2026-07-26 公开仓硬约束:CC harness 本地件绝不进公开仓
-# (.claude/agent-memory 里存的是脱敏核验笔记,含私有绝对路径与真实地名映射线索)
+# Local tooling config — not part of the published project.
 .claude/
