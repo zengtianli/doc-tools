@@ -11,6 +11,7 @@ md_tools.py - Markdown 工具集
     strip       删除 Markdown 文件中所有 blockquote
     to-docx     Markdown 转 Docx（Pandoc 版）
     to-html     Markdown 渲染为 HTML 并在浏览器中打开
+    frontmatter 批量生成 YAML frontmatter（LLM）
 
 用法:
     python3 md_tools.py <subcommand> [args...]
@@ -20,6 +21,7 @@ md_tools.py - Markdown 工具集
     python3 md_tools.py strip md_final/ --fix
     python3 md_tools.py to-docx input.md -o output.docx
     python3 md_tools.py to-html file.md
+    python3 md_tools.py frontmatter docs/ --dry-run
 """
 
 import argparse
@@ -34,7 +36,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 # ── lib path setup ──────────────────────────────────────────────────
-sys.path.insert(0, str(Path(__file__).resolve().parent))  # 本地模块与本文件同目录
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "lib"))
+sys.path.insert(0, str(Path.home() / "Dev" / "tools" / "dev" / "lib"))  # canonical 5 modules
 from display import show_error, show_info, show_processing, show_success, show_warning
 from file_ops import (
     check_file_extension,
@@ -51,8 +54,8 @@ SCRIPT_AUTHOR = "tianli"
 SCRIPT_UPDATED = "2026-03-25"
 
 
-def format_process_file(input_file):
-    """处理单个文件的格式修复"""
+def format_process_file(input_file, rules=("quotes", "punct", "units")):
+    """处理单个文件的格式修复。rules = 要应用的规则子集(与 docx 引擎口径一致)。"""
     input_path = Path(input_file)
 
     if not input_path.exists():
@@ -66,14 +69,17 @@ def format_process_file(input_file):
         with open(input_path, encoding="utf-8") as f:
             content = f.read()
 
-        show_processing("正在处理引号...")
-        fixed_content, quote_count, _ = fix_quotes(content)
-
-        show_processing("正在处理标点符号...")
-        fixed_content, punct_count = fix_punctuation(fixed_content)
-
-        show_processing("正在转换单位...")
-        fixed_content, unit_count = fix_units(fixed_content)
+        fixed_content = content
+        quote_count = punct_count = unit_count = 0
+        if "quotes" in rules:
+            show_processing("正在处理引号...")
+            fixed_content, quote_count, _ = fix_quotes(fixed_content)
+        if "punct" in rules:
+            show_processing("正在处理标点符号...")
+            fixed_content, punct_count = fix_punctuation(fixed_content)
+        if "units" in rules:
+            show_processing("正在转换单位...")
+            fixed_content, unit_count = fix_units(fixed_content)
 
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(fixed_content)
@@ -93,6 +99,8 @@ def format_process_file(input_file):
 
 def cmd_format(args):
     """format 子命令入口"""
+    sel = tuple(r for r in ("quotes", "punct", "units") if getattr(args, r, False))
+    rules = sel or ("quotes", "punct", "units")   # 一个都没给 = 全做(向后兼容)
     files = args.files
     if not files:
         files = get_input_files([], expected_ext="md")
@@ -117,7 +125,7 @@ def cmd_format(args):
     def _one(file_path) -> bool:
         print(f"\n处理文件: {Path(file_path).name}")
         try:
-            return format_process_file(str(file_path))
+            return format_process_file(str(file_path), rules)
         except Exception as e:  # 失败隔离：单文件崩不拖垮整批
             show_error(f"处理失败: {e}")
             return False
@@ -412,8 +420,8 @@ def cmd_strip(args):
 #  to-docx - Markdown 转 Docx（Pandoc 版）
 # ════════════════════════════════════════════════════════════════════
 
-# 默认模板路径（与 md_docx_template.py 的 DEFAULT_TEMPLATE 一致）
-DOCX_DEFAULT_TEMPLATE = str(Path(__file__).resolve().parent / "templates" / "template.docx")
+# 默认模板路径（对齐 md_docx_template.py:696 — doctools SoT）
+DOCX_DEFAULT_TEMPLATE = str(Path(__file__).parent.parent.parent / "templates" / "template.docx")
 
 
 def docx_get_finder_selection():
@@ -778,6 +786,172 @@ def cmd_to_html(args):
 
 
 # ════════════════════════════════════════════════════════════════════
+#  frontmatter - 批量生成 MD frontmatter（LLM）
+# ════════════════════════════════════════════════════════════════════
+
+FRONTMATTER_IGNORE_DIRS = {".git", "_site", "__pycache__", "node_modules", ".DS_Store"}
+
+FRONTMATTER_SYSTEM_PROMPT = (
+    "你是文档分析助手。根据文档内容生成 YAML frontmatter。"
+    "只返回 frontmatter 块（含 --- 分隔符），不要其他文字。"
+    "description 用中文，≤50字。tags 3-5 个，用中英文均可。"
+    '格式：\n---\ndescription: "描述"\ntags: [tag1, tag2, tag3]\n---'
+)
+
+
+def frontmatter_has_frontmatter(text: str) -> bool:
+    """检查文本是否已有 YAML frontmatter（以 --- 开头且有第二个 ---）"""
+    if not text.startswith("---\n") and not text.startswith("---\r\n"):
+        return False
+    second = text.find("---", 4)
+    return second != -1
+
+
+def frontmatter_call_llm(content: str) -> str:
+    """调用 LLM 生成 frontmatter。"""
+    from llm_client import chat
+
+    return chat(
+        system=FRONTMATTER_SYSTEM_PROMPT,
+        message=f"为以下文档生成 frontmatter：\n\n{content[:2000]}",
+    )
+
+
+def frontmatter_parse_response(text: str) -> str | None:
+    """从 API 响应中提取 --- 之间的 frontmatter 块。
+
+    容错处理模型返回多余文字的情况。
+    返回完整的 frontmatter 块（含 --- 分隔符和尾部换行），失败返回 None。
+    """
+    match = re.search(r"---\s*\n(.*?)\n---", text, re.DOTALL)
+    if not match:
+        return None
+    inner = match.group(1).strip()
+    if not inner:
+        return None
+    return f"---\n{inner}\n---\n"
+
+
+def frontmatter_scan_files(src_dir: str) -> list[tuple[str, str]]:
+    """递归扫描目录下的 .md 文件，跳过 FRONTMATTER_IGNORE_DIRS。
+
+    返回 [(relative_path, absolute_path), ...] 按相对路径排序。
+    """
+    src = Path(src_dir).resolve()
+    results = []
+    for root, dirs, files in os.walk(src):
+        dirs[:] = [d for d in dirs if d not in FRONTMATTER_IGNORE_DIRS]
+        for f in files:
+            if f.endswith(".md"):
+                abs_path = os.path.join(root, f)
+                rel_path = os.path.relpath(abs_path, src)
+                results.append((rel_path, abs_path))
+    results.sort(key=lambda x: x[0])
+    return results
+
+
+def frontmatter_process_file(filepath: str, content: str) -> str | None:
+    """对单个文件调用 API 生成 frontmatter。
+
+    返回 frontmatter 字符串，失败返回 None。
+    """
+    try:
+        raw = frontmatter_call_llm(content)
+    except Exception as e:
+        print(f"  Error: {e}")
+        return None
+
+    fm = frontmatter_parse_response(raw)
+    if fm is None:
+        print(f"  Failed to parse response: {raw[:100]}")
+        return None
+    return fm
+
+
+def cmd_frontmatter(args):
+    """frontmatter 子命令入口"""
+    src_dir = args.src_dir
+    if not os.path.isdir(src_dir):
+        show_error(f"'{src_dir}' is not a directory")
+        sys.exit(1)
+
+    # 收集文件
+    if args.file:
+        abs_path = os.path.join(os.path.abspath(src_dir), args.file)
+        if not os.path.isfile(abs_path):
+            show_error(f"file not found: {abs_path}")
+            sys.exit(1)
+        files = [(args.file, abs_path)]
+    else:
+        files = frontmatter_scan_files(src_dir)
+
+    if not files:
+        print("No .md files found.")
+        return
+
+    # 过滤已有 frontmatter 的文件
+    to_process = []
+    skipped = 0
+    for rel, abs_path in files:
+        try:
+            content = Path(abs_path).read_text(encoding="utf-8")
+        except Exception as e:
+            print(f"Warning: cannot read {rel}: {e}")
+            skipped += 1
+            continue
+        if frontmatter_has_frontmatter(content):
+            skipped += 1
+            continue
+        to_process.append((rel, abs_path, content))
+
+    total = len(to_process)
+
+    # dry-run 模式
+    if args.dry_run:
+        print(f"Files to process ({total}):")
+        for rel, _, _ in to_process:
+            print(f"  {rel}")
+        print(f"\nTotal: {total} files to process, {skipped} skipped (already have frontmatter)")
+        return
+
+    if total == 0:
+        print(f"All files already have frontmatter. Skipped {skipped} files.")
+        return
+
+    print(f"Processing {total} files (skipping {skipped} with existing frontmatter)...\n")
+
+    processed = 0
+    failed = 0
+
+    for i, (rel, abs_path, content) in enumerate(to_process, 1):
+        print(f"[{i}/{total}] Processing: {rel}")
+
+        fm = frontmatter_process_file(abs_path, content)
+        if fm is None:
+            failed += 1
+            print("  FAILED")
+            continue
+
+        # 写入文件头部
+        try:
+            new_content = fm + "\n" + content
+            Path(abs_path).write_text(new_content, encoding="utf-8")
+            processed += 1
+            desc_match = re.search(r'description:\s*"(.+?)"', fm)
+            desc = desc_match.group(1) if desc_match else "(parsed)"
+            print(f"  OK: {desc}")
+        except Exception as e:
+            failed += 1
+            print(f"  Write error: {e}")
+
+        # Rate limiting: 0.5s 间隔
+        if i < total:
+            time.sleep(0.5)
+
+    print(f"\nDone! Processed {processed} files, skipped {skipped}, failed {failed}")
+
+
+# ════════════════════════════════════════════════════════════════════
 #  CLI - argparse 主入口
 # ════════════════════════════════════════════════════════════════════
 
@@ -798,6 +972,9 @@ def build_parser():
   %(prog)s to-docx input.md -t template.docx     用模板转换
   %(prog)s to-html file.md                       渲染为 HTML
   %(prog)s to-html dir/                          目录批量渲染
+  %(prog)s frontmatter docs/                     批量生成 frontmatter
+  %(prog)s frontmatter docs/ --dry-run           只列出待处理文件
+  %(prog)s frontmatter docs/ --file README.md    只处理单个文件
 """,
     )
     parser.add_argument(
@@ -815,6 +992,9 @@ def build_parser():
         description="修复 Markdown 文件中的引号、英文标点和中文单位格式",
     )
     p_format.add_argument("files", nargs="*", help="要处理的 Markdown 文件（支持多个）")
+    p_format.add_argument("--quotes", action="store_true", help="只修引号")
+    p_format.add_argument("--punct", action="store_true", help="只修英文标点")
+    p_format.add_argument("--units", action="store_true", help="只转中文单位")
 
     # ── merge ──
     p_merge = subparsers.add_parser(
@@ -869,6 +1049,16 @@ def build_parser():
     p_html.add_argument("-o", "--output-dir", help="输出目录（默认用临时目录）")
     p_html.add_argument("--no-open", action="store_true", help="不自动打开浏览器")
 
+    # ── frontmatter ──
+    p_fm = subparsers.add_parser(
+        "frontmatter",
+        help="批量生成 YAML frontmatter（LLM）",
+        description="扫描目录下的 Markdown 文件，调用 LLM 生成 description + tags 的 YAML frontmatter",
+    )
+    p_fm.add_argument("src_dir", help="要扫描的目录路径")
+    p_fm.add_argument("--dry-run", action="store_true", help="只列出会处理的文件，不调用 API")
+    p_fm.add_argument("--file", dest="file", help="只处理单个文件（相对于 src_dir 的路径）")
+
     return parser
 
 
@@ -888,6 +1078,7 @@ def main():
         "strip": cmd_strip,
         "to-docx": cmd_to_docx,
         "to-html": cmd_to_html,
+        "frontmatter": cmd_frontmatter,
     }
 
     handler = commands.get(args.command)

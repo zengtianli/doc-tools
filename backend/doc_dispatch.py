@@ -119,7 +119,8 @@ def route_clean(f: str, opts: dict | None = None) -> tuple[list[str], str] | Non
     if e == "docx":
         return _py("docx_text_formatter.py", f, *_clean_flags(opts)), "docx → 文本修复(引号/标点/单位)"
     if e == "md":
-        return _py("md_tools.py", "format", f), "md → 格式标准化"
+        rules = [a for a in _clean_flags(opts) if a in ("--quotes", "--punct", "--units")]
+        return _py("md_tools.py", "format", *rules, f), "md → 格式标准化"
     if e in ("pptx",):
         # 只跑 format+table(文本与表格规范)。font 阶段=全篇强制换字体,
         # 2026-07-26 拆成独立动词 fontunify —— 换字体不属于「文本规范化」。
@@ -196,6 +197,9 @@ def route_lowercase(f: str) -> tuple[list[str], str] | None:
     if _ext(f) in ("xlsx", "xlsm", "docx"):
         return _data("xlsx_lowercase.py", f), f"{_ext(f)} → 英文小写整理"
     return None
+def do_quotes(files, opts: dict | None = None):
+    return _per_file(files, route_quotes, "引号统一", opts or {})
+
 def do_fontunify(files):
     return _per_file(files, route_fontunify, "字体统一")
 def do_stripchrome(files):
@@ -213,6 +217,26 @@ def route_stripchrome(f: str) -> tuple[list[str], str] | None:
                 "docx → 清除页眉页脚(不改文字)")
     return None
 
+
+def route_quotes(f: str, opts: dict | None = None) -> tuple[list[str], str] | None:
+    """只把引号统一成中文弯引号 —— 独立动词(2026-07-26 用户钦定)。
+
+    典型场景:中文期刊投稿(GB/T 7714 参考文献区标点须半角)只想动引号,
+    绝不能顺手把逗号冒号括号一起全角化。
+    """
+    e = _ext(f)
+    # 从 clean 的翻译结果里只取「引号相关」的旗标:宋体开关 + 域白名单
+    flags = _clean_flags(opts)
+    extra: list[str] = []
+    if "--no-quote-font" in flags:
+        extra.append("--no-quote-font")
+    if "--scope" in flags:
+        extra += ["--scope", flags[flags.index("--scope") + 1]]
+    if e == "docx":
+        return _py("docx_text_formatter.py", f, "--quotes", *extra), "docx → 只统一引号"
+    if e == "md":
+        return _py("md_tools.py", "format", "--quotes", f), "md → 只统一引号"
+    return None
 
 def route_fontunify(f: str) -> tuple[list[str], str] | None:
     """pptx 全篇(含母版/版式)字体统一。⚠ 原地覆写原文件,留 .backup。"""
@@ -338,6 +362,8 @@ def main() -> int:
     if a.verb == "view":    return do_view(a.files)
     if a.verb == "merge":   return do_merge(a.files)
     if a.verb == "convert": return do_convert(a.files, a.target)
+    if a.verb == "quotes":
+        return do_quotes(a.files)
     if a.verb == "fontunify":
         return do_fontunify(a.files)
     if a.verb == "lowercase":
