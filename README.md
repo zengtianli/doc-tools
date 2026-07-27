@@ -78,3 +78,17 @@ DocTools 是一个原生 macOS 批量文档工具箱：清洗 / 转换 / 拆分 
 ## License
 
 [MIT](LICENSE)
+
+## 与私有版的关系
+
+`backend/` 是私有版 `~/Dev/tools/doctools` 的**单向快照**，随其修复同步（本次同步了
+「规范化」的选项声明：修哪些内容 × 改哪些范围）。
+
+`Sources/`（SwiftUI 壳）**已刻意分叉**，不跟私有版同步 —— 所以后端声明的 `options`
+在本公开版里暂不渲染成勾选框，改用命令行 `--opt K=V`：
+
+```bash
+python3 backend/doc_gui_backend.py gui-ops          # 看某个 op 有哪些可选项
+python3 backend/doc_gui_backend.py gui-run --op clean \
+        --opt scope.comments=0 --opt rule.units=0 --files a.docx
+```
