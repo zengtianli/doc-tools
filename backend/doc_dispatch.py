@@ -121,10 +121,10 @@ def route_clean(f: str, opts: dict | None = None) -> tuple[list[str], str] | Non
     if e == "md":
         return _py("md_tools.py", "format", f), "md → 格式标准化"
     if e in ("pptx",):
-        return _py("pptx_tools.py", "all", f), "pptx → 字体+表格+文本 全套规范"
-    if e in ("xlsx", "xlsm"):
-        return _data("xlsx_lowercase.py", f), "xlsx → 英文小写整理"
-    return None
+        # 只跑 format+table(文本与表格规范)。font 阶段=全篇强制换字体,
+        # 2026-07-26 拆成独立动词 fontunify —— 换字体不属于「文本规范化」。
+        return _py("pptx_tools.py", "all", "--phases", "format,table", f), "pptx → 文本+表格规范"
+    return None   # xlsx 的「英文小写」已拆成独立动词 lowercase(那是语义级数据改写)
 
 
 def route_convert(f: str, target: str) -> tuple[list[str], str] | None:
@@ -191,6 +191,34 @@ def _per_file(files: list[str], router, verb: str, opts: dict | None = None) -> 
 def do_clean(files, opts: dict | None = None):
     return _per_file(files, route_clean, "规范化", opts or {})
 def do_split(files):  return _per_file(files, route_split, "拆分")
+def route_lowercase(f: str) -> tuple[list[str], str] | None:
+    """英文转小写 —— 语义级数据改写,与文本规范化不是一回事,故独立成动词。"""
+    if _ext(f) in ("xlsx", "xlsm", "docx"):
+        return _data("xlsx_lowercase.py", f), f"{_ext(f)} → 英文小写整理"
+    return None
+def do_fontunify(files):
+    return _per_file(files, route_fontunify, "字体统一")
+def do_stripchrome(files):
+    return _per_file(files, route_stripchrome, "清页眉页脚")
+
+
+def do_lowercase(files):
+    return _per_file(files, route_lowercase, "英文小写整理")
+
+
+def route_stripchrome(f: str) -> tuple[list[str], str] | None:
+    """只删页眉页脚,不动一个字(--strip-only)。⚠ 不可撤销,产出 _fixed 副本。"""
+    if _ext(f) == "docx":
+        return (_py("docx_text_formatter.py", f, "--strip-only"),
+                "docx → 清除页眉页脚(不改文字)")
+    return None
+
+
+def route_fontunify(f: str) -> tuple[list[str], str] | None:
+    """pptx 全篇(含母版/版式)字体统一。⚠ 原地覆写原文件,留 .backup。"""
+    if _ext(f) == "pptx":
+        return _py("pptx_tools.py", "font", f), "pptx → 全篇字体统一(原地覆写,留 .backup)"
+    return None
 
 
 def _word_textfix(out: Path) -> int:
@@ -310,6 +338,12 @@ def main() -> int:
     if a.verb == "view":    return do_view(a.files)
     if a.verb == "merge":   return do_merge(a.files)
     if a.verb == "convert": return do_convert(a.files, a.target)
+    if a.verb == "fontunify":
+        return do_fontunify(a.files)
+    if a.verb == "lowercase":
+        return do_lowercase(a.files)
+    if a.verb == "stripchrome":
+        return do_stripchrome(a.files)
     return 1
 
 
