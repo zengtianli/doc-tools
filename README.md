@@ -81,7 +81,8 @@ DocTools 是一个原生 macOS 批量文档工具箱：清洗 / 转换 / 拆分 
 
 ## 与私有版的关系
 
-`backend/` 是私有版 `~/Dev/tools/doctools` 的**单向快照**，随其修复同步（本次同步了
+`backend/` 是私有版 `~/Dev/tools/doctools` 的**单向快照**，私有版发版才同步（2026-08-10 定；
+日常私有 commit 不追平。本次同步了
 「规范化」的选项声明：修哪些内容 × 改哪些范围）。
 
 `Sources/`（SwiftUI 壳）**已刻意分叉**，不跟私有版同步 —— 所以后端声明的 `options`
