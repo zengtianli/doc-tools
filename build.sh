@@ -14,9 +14,21 @@ cd "$DIR"
 APP_NAME="DocTools"
 VERSION="1.0.0"
 
-# xcodebuild needs a full Xcode (not just Command Line Tools).
-if [ -d /Applications/Xcode.app ]; then
-  export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+# Pick a usable Xcode. Never hardcode an Xcode bundle path: on the author's
+# machine that bundle is an older Xcode that the running macOS refuses to support,
+# while a newer one sits right next to it under a different name.
+#   · if the shared resolver is present (author's machine), let it choose
+#   · otherwise honour whatever `xcode-select` points at
+_XCODE_ENV_SH=/Users/tianli/Dev/tools/dev/lib/tools/macapp/xcode_env.sh
+if [ -f "$_XCODE_ENV_SH" ]; then
+  # shellcheck source=/dev/null
+  source "$_XCODE_ENV_SH"
+  xcode_env_use macosx
+fi
+if ! xcodebuild -version >/dev/null; then
+  echo "❌ No usable Xcode toolchain." >&2
+  echo "   Install a full Xcode, then: sudo xcode-select -s /Applications/<Xcode>.app/Contents/Developer" >&2
+  exit 1
 fi
 
 echo "→ Building (Release)…"
