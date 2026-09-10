@@ -81,9 +81,9 @@ def prepare(source: Path, preset: str, batch: Path) -> dict:
         "inputs": [{"file": path.name, "sha256": sha256(path)} for path in sorted((run / "inputs").iterdir())],
         "launch": "Launch this copied app with activate:false; do not open the production bundle.",
         "shots": {
-            "quotes": "Quotes selected; inspect options, then AX-click 开始处理.",
-            "convert": "Convert selected; choose Markdown (.md) in the real format menu, then AX-click 开始处理.",
-            "results": "Quotes selected with one DOCX and one unsupported JPG; AX-click 开始处理 to show partial success.",
+            "quotes": "Quotes selected; inspect options, then AX-click 执行.",
+            "convert": "Convert selected; choose Markdown (.md) in the real format menu, then AX-click 执行.",
+            "results": "Quotes selected with one DOCX and one unsupported JPG; AX-click 执行 to show partial success.",
         }[preset],
     }
     (run / "recording-manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
@@ -97,6 +97,9 @@ def main() -> None:
     parser.add_argument("--all", action="store_true", help="Prepare one separate copy per storyboard shot")
     args = parser.parse_args()
     source = args.app.resolve(strict=True)
+    source_info = plistlib.loads((source / "Contents/Info.plist").read_bytes())
+    if source_info.get("CFBundleIdentifier") != "io.github.zengtianli.DocTools":
+        parser.error("Use the public production DocKit build as the source, not another recording or installed private copy.")
     if not (source / "Contents/Resources/python/bin/python3.12").is_file():
         parser.error("The source app must contain the bundled Python runtime; run bash build.sh first.")
     batch = ROOT / "build/recording" / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8])
