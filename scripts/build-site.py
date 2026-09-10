@@ -24,6 +24,7 @@ if not a.preview:
     if missing: raise SystemExit("Missing real product media: "+", ".join(missing))
     evidence=json.loads((media/"media-manifest.json").read_text())
     if evidence.get("version")!=release["version"]: raise SystemExit("Recorded product version does not match release")
+    if str(evidence.get("build"))!=str(release.get("build")): raise SystemExit("Recorded product build does not match release")
     if evidence.get("release_sha256")!=release["sha256"]: raise SystemExit("Recorded release archive does not match download")
     if evidence.get("screenshot_sha256")!=hashlib.sha256((media/"screenshot.png").read_bytes()).hexdigest(): raise SystemExit("Screenshot does not match reviewed media")
     for name in [item[0] for item in clips]+["tutorial"]:

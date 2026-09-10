@@ -38,6 +38,10 @@ archive = dist / f"DocKit-v{version}-arm64.zip"
 if archive.exists(): archive.unlink()
 subprocess.run(["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", str(app), str(archive)], check=True)
 manifest = {"product": "DocKit", "version": version, "tag": "v"+version, "bundle_id": info["CFBundleIdentifier"],
+            "build": info["CFBundleVersion"],
+            "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+            "source_dirty": bool(subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT, text=True).strip()),
+            "source_executable_sha256": hashlib.sha256((app / "Contents/MacOS/DocTools").read_bytes()).hexdigest(),
             "filename": archive.name, "bytes": archive.stat().st_size,
             "sha256": hashlib.sha256(archive.read_bytes()).hexdigest(), "arch": "arm64", "minimum_macos": "15.0",
             "signing": "ad-hoc; not notarized", "runtime": "bundled CPython 3.12.13",

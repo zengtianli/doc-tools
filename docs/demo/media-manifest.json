@@ -320,7 +320,7 @@
   "privacy_review": "源片仅包含DocKit窗口与虚构文件；未见其他应用、真实用户目录名或业务材料。",
   "final_visual_review": {
     "editor": "passed: source start/middle/end and action frames; final captions, selection changes, processing states and success/partial-success results",
-    "main_thread": "pending final visual approval",
+    "main_thread": "passed: reviewed all three posters, the 390px mobile page, image loading, video metadata readiness and the matching 5:4 ratio; no claim of frame-by-frame full-video review",
     "scope": "Three captioned scenes and their chapter compilation; complete decode and black-area checks passed. Screenshot preserved without editing."
   }
 }

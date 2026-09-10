@@ -61,7 +61,7 @@ bash scripts/check-ui-state.sh
 
 `VERSION` 是版本源，`scripts/package.py` 从实际安装包生成哈希与发行清单。`scripts/build-site.py` 生成 `build/site/` 与显式公开白名单 `site-manifest.json`；`--preview` 仅供本地预览，正式构建必须有匹配版本的真实媒体。
 
-`python3 scripts/publish.py` 准备并验证发行与网站；明确发布时加 `--upload`，已有同名 Release 会拒绝覆盖。网站包交给现有部署入口消费，发布脚本不更改服务器配置。真实录制要求见 `docs/demo/plan.md`，原片留在 gitignored build/tutorial/raw/。
+`python3 scripts/publish.py` 构建并验证新发行与网站。录制验收后，`python3 scripts/publish.py --upload` 直接消费已准备的 dist 安装包，检查哈希、包内签名、真实版本/build 与媒体对应关系，不再重新编译。上传要求工作树干净且提交已推送；Release 指向安装包清单中的二进制源提交，已有同名 Release 会拒绝覆盖。网站包交给现有部署入口消费，发布脚本不更改服务器配置。真实录制要求见 `docs/demo/plan.md`，原片留在 gitignored build/tutorial/raw/。
 
 ## 许可
 
