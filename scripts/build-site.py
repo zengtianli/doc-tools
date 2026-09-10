@@ -16,15 +16,18 @@ archive=ROOT/"dist"/release["filename"]
 assert hashlib.sha256(archive.read_bytes()).hexdigest()==release["sha256"],"Release archive hash mismatch"
 media=ROOT/"docs/demo"
 clips=[("quotes","只统一引号","选中 Word，保留单位和页眉，只处理选定范围。"),
-       ("convert","把 Word 变成 Markdown","选择目标格式，完成后直接定位转换结果。"),
+       ("convert","把 Word 变成 Markdown","选择目标格式，转换结果单独保存。"),
        ("results","看懂部分成功","一份成功、一份格式不支持，原件仍完整保留。")]
-needed=["screenshot.png"]+[name+suffix for name,_,_ in clips for suffix in (".mp4",".jpg")]
+needed=["screenshot.png","tutorial.mp4"]+[name+suffix for name,_,_ in clips for suffix in (".mp4",".jpg")]
 missing=[n for n in needed if not (media/n).is_file()]
 if not a.preview:
     if missing: raise SystemExit("Missing real product media: "+", ".join(missing))
     evidence=json.loads((media/"media-manifest.json").read_text())
     if evidence.get("version")!=release["version"]: raise SystemExit("Recorded product version does not match release")
-    for name,_,_ in clips:
+    if evidence.get("release_sha256")!=release["sha256"]: raise SystemExit("Recorded release archive does not match download")
+    if evidence.get("screenshot_sha256")!=hashlib.sha256((media/"screenshot.png").read_bytes()).hexdigest(): raise SystemExit("Screenshot does not match reviewed media")
+    for name in [item[0] for item in clips]+["tutorial"]:
+        if evidence["checks"][name]["sha256"]!=hashlib.sha256((media/(name+".mp4")).read_bytes()).hexdigest(): raise SystemExit("Video does not match media manifest: "+name)
         duration=float(subprocess.check_output(["ffprobe","-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",str(media/(name+".mp4"))],text=True))
         if duration<1: raise SystemExit("Invalid video: "+name)
 out=ROOT/"build/site"
@@ -56,8 +59,13 @@ for name,title,description in clips:
         link=f'<a href="media/{name}.mp4" download>下载这段演示 ↓</a>'
     else: player='<div class="preview-missing">本地预览：等待真实录屏</div>';link=""
     videos.append(f'<article>{player}<div class="demo-copy"><h3>{title}</h3><p>{description}</p>{link}</div></article>')
+tutorial=""
+if (media/"tutorial.mp4").is_file():
+    for name in ("tutorial.mp4","tutorial.vtt","media-manifest.json"):
+        if (media/name).is_file(): shutil.copy2(media/name,out/"media"/name)
+    tutorial='<div class="demo-actions"><a class="text-link" href="media/tutorial.mp4" download>下载三段完整演示 ↓</a></div>'
 replacements={"VERSION":release["version"],"FILENAME":archive.name,"DOWNLOAD":"downloads/"+archive.name,
-              "SIZE":f'{release["bytes"]/1024/1024:.1f} MB',"SCREENSHOT":shot,"VIDEOS":"".join(videos)}
+              "SIZE":f'{release["bytes"]/1024/1024:.1f} MB',"SCREENSHOT":shot,"VIDEOS":"".join(videos),"TUTORIAL":tutorial}
 page=(ROOT/"site/index.html").read_text()
 for key,value in replacements.items(): page=page.replace("{{"+key+"}}",value)
 if "{{" in page: raise SystemExit("Unresolved website placeholders")

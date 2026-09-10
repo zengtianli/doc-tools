@@ -1,0 +1,326 @@
+{
+  "product": "DocKit",
+  "version": "1.1.0",
+  "build": "16",
+  "recorded_at": "2026-09-10",
+  "source": "real-app-window",
+  "release_sha256": "2afd9cd036b974550c99c89e1d53aa82a03ce3fccada4060a53a67c1ab28ef6d",
+  "environment": {
+    "macos": "27.0",
+    "architecture": "arm64",
+    "window_pixels": [
+      1106,
+      890
+    ]
+  },
+  "isolation": {
+    "synthetic_inputs": true,
+    "separate_bundle_and_preferences": true,
+    "non_key_background_panel": true,
+    "separate_outputs": true,
+    "finder_not_opened": true
+  },
+  "editing": {
+    "caption_bands_outside_product_image": true,
+    "labelled_local_crops": true,
+    "retained_speed": 1,
+    "removed_waits_labelled": true,
+    "audio": "原片无音轨，成片静音",
+    "conversion_result": "同一任务完成状态另行补拍，已在画面标注；没有声称原片连续覆盖完成。"
+  },
+  "independent_verification": {
+    "all_synthetic_inputs": "三场景各7个输入均与准备时SHA-256一致",
+    "quotes": "正文和表格直引号转为中文弯引号；页眉XML不变，面积与URL保留",
+    "convert": "Markdown保留24人、120平方米及表格各行内容",
+    "results": "成功1/2；Word副本存在，正文6个和页眉2个引号更新；JPG原件未变"
+  },
+  "scenes": {
+    "quotes": {
+      "sources": {
+        "quotes.mov": {
+          "sha256": "6d909c51ebde3de0d14d210d73b856d416c2e7f0302a3f13535390785a8ad96f",
+          "duration": 22.1
+        }
+      },
+      "cuts": [
+        {
+          "source": "quotes.mov",
+          "source_start": 0.4,
+          "source_end": 2.4,
+          "output_start": 0.0,
+          "output_end": 2.0,
+          "crop_xywh": [
+            23,
+            16,
+            1060,
+            844
+          ],
+          "view": "真实窗口",
+          "speed": 1,
+          "title": "只统一引号，范围由你选",
+          "subtitle": "选中虚构 Word 示例 · 不修改标点和单位"
+        },
+        {
+          "source": "quotes.mov",
+          "source_start": 6.5,
+          "source_end": 10.0,
+          "output_start": 2.0,
+          "output_end": 5.5,
+          "crop_xywh": [
+            298,
+            78,
+            770,
+            322
+          ],
+          "view": "局部放大",
+          "speed": 1,
+          "title": "取消勾选「页眉页脚」",
+          "subtitle": "这次保留页眉，仅按勾选范围处理"
+        },
+        {
+          "source": "quotes.mov",
+          "source_start": 14.0,
+          "source_end": 19.0,
+          "output_start": 5.5,
+          "output_end": 10.5,
+          "crop_xywh": [
+            23,
+            16,
+            1060,
+            844
+          ],
+          "view": "真实窗口",
+          "speed": 1,
+          "title": "点击「执行」，生成结果副本",
+          "subtitle": "保留操作原速 · 已剪去操作间的等待"
+        },
+        {
+          "source": "quotes.mov",
+          "source_start": 19.0,
+          "source_end": 21.7,
+          "output_start": 10.5,
+          "output_end": 13.2,
+          "crop_xywh": [
+            298,
+            610,
+            770,
+            230
+          ],
+          "view": "局部放大",
+          "speed": 1,
+          "title": "成功 1/1，原件仍然保留",
+          "subtitle": "已核对：正文引号更新，未选中的页眉保持原样"
+        }
+      ],
+      "duration": 13.2,
+      "poster_time": 12.0
+    },
+    "convert": {
+      "sources": {
+        "convert.mov": {
+          "sha256": "36c2abdd290e7dd3ad864550921653cad82de9393ef4143971b60f15ca24a6e3",
+          "duration": 25.15
+        },
+        "convert-result.mov": {
+          "sha256": "29c94516d6a9adbf71331d99a0c2b098a2fba519712f2ffe4124e055d7a16f4e",
+          "duration": 6.235
+        }
+      },
+      "cuts": [
+        {
+          "source": "convert.mov",
+          "source_start": 0.3,
+          "source_end": 3.5,
+          "output_start": 0.0,
+          "output_end": 3.2,
+          "crop_xywh": [
+            298,
+            78,
+            770,
+            150
+          ],
+          "view": "局部放大",
+          "speed": 1,
+          "title": "选择 Markdown 作为目标格式",
+          "subtitle": "在同一个窗口中切换 Word、Markdown 等格式"
+        },
+        {
+          "source": "convert.mov",
+          "source_start": 4.5,
+          "source_end": 8.0,
+          "output_start": 3.2,
+          "output_end": 6.7,
+          "crop_xywh": [
+            23,
+            16,
+            1060,
+            844
+          ],
+          "view": "真实窗口",
+          "speed": 1,
+          "title": "点击「执行」，在本机完成转换",
+          "subtitle": "保留操作原速 · 转换等待已剪去"
+        },
+        {
+          "source": "convert-result.mov",
+          "source_start": 0.3,
+          "source_end": 3.6,
+          "output_start": 6.7,
+          "output_end": 10.0,
+          "crop_xywh": [
+            298,
+            446,
+            770,
+            194
+          ],
+          "view": "局部放大",
+          "speed": 1,
+          "title": "Word 已转换为 Markdown",
+          "subtitle": "同一任务结果补拍 · 已核对人数、面积与表格内容保留"
+        },
+        {
+          "source": "convert-result.mov",
+          "source_start": 3.6,
+          "source_end": 5.8,
+          "output_start": 10.0,
+          "output_end": 12.2,
+          "crop_xywh": [
+            23,
+            16,
+            1060,
+            844
+          ],
+          "view": "真实窗口",
+          "speed": 1,
+          "title": "成功 1/1，转换结果单独保存",
+          "subtitle": "同一任务结果补拍 · 原 Word 文件保持不变"
+        }
+      ],
+      "duration": 12.2,
+      "poster_time": 9.0
+    },
+    "results": {
+      "sources": {
+        "results.mov": {
+          "sha256": "c0ba234f73f483a77b0624a240577fca05c35409930f8a94ed15afd1e4152406",
+          "duration": 25.025
+        }
+      },
+      "cuts": [
+        {
+          "source": "results.mov",
+          "source_start": 0.5,
+          "source_end": 2.8,
+          "output_start": 0.0,
+          "output_end": 2.3,
+          "crop_xywh": [
+            23,
+            16,
+            1060,
+            844
+          ],
+          "view": "真实窗口",
+          "speed": 1,
+          "title": "批量处理，逐份看结果",
+          "subtitle": "本次选择一个 Word 文件和一个不支持的 JPG"
+        },
+        {
+          "source": "results.mov",
+          "source_start": 5.0,
+          "source_end": 10.0,
+          "output_start": 2.3,
+          "output_end": 7.3,
+          "crop_xywh": [
+            23,
+            16,
+            1060,
+            844
+          ],
+          "view": "真实窗口",
+          "speed": 1,
+          "title": "点击「执行」，等待处理结果",
+          "subtitle": "真实处理同一组虚构文件 · 原速播放"
+        },
+        {
+          "source": "results.mov",
+          "source_start": 10.0,
+          "source_end": 14.0,
+          "output_start": 7.3,
+          "output_end": 11.3,
+          "crop_xywh": [
+            298,
+            602,
+            770,
+            240
+          ],
+          "view": "局部放大",
+          "speed": 1,
+          "title": "成功 1/2，不支持的文件明确列出",
+          "subtitle": "绿色：Word 副本已生成 · 红色：该操作不支持 JPG"
+        },
+        {
+          "source": "results.mov",
+          "source_start": 14.0,
+          "source_end": 21.5,
+          "output_start": 11.3,
+          "output_end": 18.8,
+          "crop_xywh": [
+            298,
+            674,
+            750,
+            168
+          ],
+          "view": "局部放大",
+          "speed": 1,
+          "title": "展开「处理详情」",
+          "subtitle": "可以查看处理记录 · 原始文件均保持不变"
+        }
+      ],
+      "duration": 18.8,
+      "poster_time": 10.0
+    }
+  },
+  "checks": {
+    "quotes": {
+      "duration": 13.2,
+      "sha256": "5a2666a5d74d15efcf8e9cb5fcae4fb4eb5c1442ca10d32dbbcfd01024389264",
+      "bytes": 212711,
+      "decode": "passed",
+      "black_area_check": "no 30%-black product-area runs lasting 0.2s"
+    },
+    "convert": {
+      "duration": 12.2,
+      "sha256": "62e83f3474cfcec61b784ddbaa8166db13088edda351c002813971f202719b08",
+      "bytes": 198966,
+      "decode": "passed",
+      "black_area_check": "no 30%-black product-area runs lasting 0.2s"
+    },
+    "results": {
+      "duration": 18.8,
+      "sha256": "d674d11b2cc1760d857daee89a82915a03647c3a6492bdf28021f97a4d228f92",
+      "bytes": 256894,
+      "decode": "passed",
+      "black_area_check": "no 30%-black product-area runs lasting 0.2s"
+    },
+    "tutorial": {
+      "duration": 44.2,
+      "sha256": "0af0da16ae517ca76d9279c007f285e4727f182eeadf3c64cfe37bab695b9196",
+      "bytes": 666849,
+      "decode": "passed",
+      "black_area_check": "no 30%-black product-area runs lasting 0.2s"
+    }
+  },
+  "screenshot_sha256": "12f92d130562ade0035093516fa20341779e61ac50a57d5279fde2bc9ed34d9e",
+  "not_covered": [
+    "新用户安装与系统权限授权",
+    "打开Finder",
+    "完整处理日志的逐行展示",
+    "LibreOffice依赖格式"
+  ],
+  "privacy_review": "源片仅包含DocKit窗口与虚构文件；未见其他应用、真实用户目录名或业务材料。",
+  "final_visual_review": {
+    "editor": "passed: source start/middle/end and action frames; final captions, selection changes, processing states and success/partial-success results",
+    "main_thread": "pending final visual approval",
+    "scope": "Three captioned scenes and their chapter compilation; complete decode and black-area checks passed. Screenshot preserved without editing."
+  }
+}
