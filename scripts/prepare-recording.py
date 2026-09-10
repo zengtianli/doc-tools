@@ -28,7 +28,7 @@ def sha256(path: Path) -> str:
 def prepare(source: Path, preset: str, batch: Path) -> dict:
     run = batch / preset
     run.mkdir(mode=0o700)
-    for name in ("inputs", "outputs", "state", "home", "home/Library", "home/Library/Preferences"):
+    for name in ("inputs", "outputs", "state", "state/python-home", "state/python-home/Downloads"):
         (run / name).mkdir(mode=0o700)
     source_info = plistlib.loads((source / "Contents/Info.plist").read_bytes())
     app = run / "DocKit.app"
@@ -41,9 +41,7 @@ def prepare(source: Path, preset: str, batch: Path) -> dict:
         "DOCKIT_INPUT_DIR": str(run / "inputs"),
         "DOCKIT_OUTPUT_DIR": str(run / "outputs"),
         "DOCKIT_STATE_DIR": str(run / "state"),
-        "DOCKIT_PREFERENCES_DIR": str(run / "home/Library/Preferences"),
-        "HOME": str(run / "home"),
-        "CFFIXED_USER_HOME": str(run / "home"),
+        "DOCKIT_BACKEND_HOME": str(run / "state/python-home"),
         "DOCKIT_DEMO_OP": operation,
         "DOCKIT_DEMO_FILES": "\n".join(str(run / "inputs" / name) for name in filenames),
         "DOCKIT_NO_OPEN": "1",
@@ -53,13 +51,16 @@ def prepare(source: Path, preset: str, batch: Path) -> dict:
     generation_env = {key: value for key, value in os.environ.items()
                       if key not in {"PYTHONHOME", "PYTHONPATH"}}
     generation_env.update(env)
+    generation_env["HOME"] = env["DOCKIT_BACKEND_HOME"]
+    generation_env.pop("CFFIXED_USER_HOME", None)
     subprocess.run([str(app / "Contents/Resources/python/bin/python3.12"), "-s", "-B",
                     str(ROOT / "scripts/make-demo.py"), str(run / "inputs")],
                    env=generation_env, check=True, stdout=subprocess.DEVNULL)
     marker = {"kind": "dockit-recording-v1", "bundle_id": identifier}
     (run / ".dockit-recording.json").write_text(json.dumps(marker) + "\n")
     info = dict(source_info)
-    info.update(CFBundleIdentifier=identifier, LSEnvironment=env, LSUIElement=True)
+    info.update(CFBundleIdentifier=identifier, LSEnvironment=env, LSUIElement=True,
+                NSSupportsAutomaticTermination=False, NSSupportsSuddenTermination=False)
     # Recording copies must not register as document handlers or URL schemes.
     for key in ("CFBundleDocumentTypes", "UTImportedTypeDeclarations", "UTExportedTypeDeclarations", "CFBundleURLTypes"):
         info.pop(key, None)
@@ -78,6 +79,8 @@ def prepare(source: Path, preset: str, batch: Path) -> dict:
         "source_executable_sha256": source_hash,
         "recording_executable_sha256": sha256(app / "Contents/MacOS" / executable),
         "environment": env,
+        "preferences": "The unique recording bundle ID uses a separate preference domain; GUI HOME is not overridden.",
+        "diagnostics": str(run / "state/launch-diagnostics.jsonl"),
         "inputs": [{"file": path.name, "sha256": sha256(path)} for path in sorted((run / "inputs").iterdir())],
         "launch": "Launch this copied app with activate:false; do not open the production bundle.",
         "shots": {
@@ -87,7 +90,7 @@ def prepare(source: Path, preset: str, batch: Path) -> dict:
         }[preset],
     }
     (run / "recording-manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
-    return {key: manifest[key] for key in ("preset", "app", "bundle_id", "version", "build", "shots")}
+    return {key: manifest[key] for key in ("preset", "app", "bundle_id", "version", "build", "shots", "diagnostics")}
 
 
 def main() -> None:

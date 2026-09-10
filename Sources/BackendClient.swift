@@ -234,6 +234,12 @@ actor BackendClient {
         env["PYTHONNOUSERSITE"] = "1"
         env.removeValue(forKey: "PYTHONHOME")
         env.removeValue(forKey: "PYTHONPATH")
+        // The recording GUI keeps the system HOME. Only its Python child gets
+        // an isolated home, so optional helper lookup cannot read personal tools.
+        if env["DOCKIT_BACKGROUND"] == "1", let home = env["DOCKIT_BACKEND_HOME"] {
+            env["HOME"] = home
+            env.removeValue(forKey: "CFFIXED_USER_HOME")
+        }
         process.currentDirectoryURL = URL(fileURLWithPath: NSTemporaryDirectory())
         process.environment = env
 
