@@ -15,6 +15,10 @@ with tempfile.TemporaryDirectory(prefix="dockit-relocation-") as td:
     root=Path(td);app=root/"Renamed application/DocKit.app"
     shutil.copytree(original_app,app,symlinks=True)
     resources=app/"Contents/Resources";python=resources/"python/bin/python3.12";backend=resources/"backend/doc_gui_backend.py"
+    for item in (resources/"python").rglob("*"):
+        if item.is_symlink(): assert item.resolve().is_relative_to((resources/"python").resolve()),item
+        elif item.is_file() and item.stat().st_size<5000000:
+            assert str(Path.home()).encode() not in item.read_bytes(),"Build-machine path remains in runtime metadata"
     fixtures=root/"Fixtures";home=root/"Empty home";home.mkdir()
     env={"HOME":str(home),"PATH":"/usr/bin:/bin","PYTHONDONTWRITEBYTECODE":"1","PYTHONNOUSERSITE":"1","LANG":"en_US.UTF-8","DOCKIT_NO_OPEN":"1"}
     subprocess.run([str(python),"-B",str(ROOT/"scripts/make-demo.py"),str(fixtures)],env=env,check=True,capture_output=True)
