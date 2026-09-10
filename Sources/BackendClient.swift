@@ -134,6 +134,12 @@ actor BackendClient {
     /// (PEP 723) dependencies, which can take 1–2 minutes.
     static let defaultTimeout: TimeInterval = 180
 
+    static func resolvePython(for script: String) -> String? {
+        let runtime = URL(fileURLWithPath: script).deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("python/bin/python3.12").path
+        return FileManager.default.isExecutableFile(atPath: runtime) ? runtime : nil
+    }
+
     let scriptPath: String?
 
     init(scriptPath: String? = BackendClient.resolveScriptPath()) {
@@ -149,9 +155,10 @@ actor BackendClient {
 
     /// Run one operation. op = operation id; target = destination format for
     /// convert (nil otherwise); files = absolute paths.
-    func run(op: String, target: String?, files: [String]) async throws -> RunResult {
+    func run(op: String, target: String?, options: [String: String] = [:], files: [String]) async throws -> RunResult {
         var args = ["gui-run", "--op", op]
         if let target, !target.isEmpty { args += ["--to", target] }
+        for key in options.keys.sorted() { args += ["--opt", "\(key)=\(options[key]!)"] }
         args.append("--files"); args += files
         return try await runDecoding(args: args, timeout: Self.defaultTimeout)
     }
@@ -205,11 +212,14 @@ actor BackendClient {
     private func runProcess(args: [String], stdin: String?, script: String?,
                             timeout: TimeInterval) async throws -> String {
         guard let script else { throw BackendError.scriptNotFound }
-        guard let uv = BackendClient.resolveUV() else { throw BackendError.uvNotFound }
-
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: uv)
-        process.arguments = ["run", script] + args
+        if let python = BackendClient.resolvePython(for: script) {
+            process.executableURL = URL(fileURLWithPath: python)
+            process.arguments = ["-s", "-B", script] + args
+        } else if let uv = BackendClient.resolveUV() {
+            process.executableURL = URL(fileURLWithPath: uv)
+            process.arguments = ["run", script] + args
+        } else { throw BackendError.uvNotFound }
 
         // GUI-launched apps only inherit launchd's minimal PATH; prepend the
         // usual tool directories so the backend can find helper binaries
@@ -221,6 +231,10 @@ actor BackendClient {
         // Keep Python from writing __pycache__ into the app bundle
         // (mutating Resources would also dirty the code signature).
         env["PYTHONDONTWRITEBYTECODE"] = "1"
+        env["PYTHONNOUSERSITE"] = "1"
+        env.removeValue(forKey: "PYTHONHOME")
+        env.removeValue(forKey: "PYTHONPATH")
+        process.currentDirectoryURL = URL(fileURLWithPath: NSTemporaryDirectory())
         process.environment = env
 
         let outPipe = Pipe()

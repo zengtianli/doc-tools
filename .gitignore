@@ -20,6 +20,8 @@ icon/AppIcon.iconset/
 
 # python
 backend/__pycache__/
+**/__pycache__/
+build-runtime.log
 
 # release artifacts
 *.zip

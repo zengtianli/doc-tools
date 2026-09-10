@@ -1,22 +1,7 @@
 import Foundation
 import SwiftUI
 
-// =============================================================================
-// DocTools — ViewModel
-//
-// Shape rules:
-//   · @MainActor ObservableObject; every backend call is async and errors go
-//     into the banner (human-readable) — no alerts, no print-and-forget. The
-//     detail root keeps a permanent StatusBanner slot so errors are visible
-//     even with nothing selected.
-//   · One independent @Published busy flag per action: isLoadingOps (listing
-//     operations at startup) and isRunning (running an operation).
-//   · Zero business logic in Swift: drop files → pick an operation → call the
-//     backend → show results. Everything else is doc_gui_backend.py's job.
-// =============================================================================
 
-/// Persistent status/error banner (one at the detail root, visible even with
-/// no selection).
 struct BannerMsg: Equatable {
     enum Kind { case error, warning, info }
     var kind: Kind
@@ -27,9 +12,8 @@ struct BannerMsg: Equatable {
     static func info(_ t: String) -> BannerMsg { .init(kind: .info, text: t) }
 }
 
-/// One dropped/picked file entry (deduplicated by absolute path).
 struct InputFile: Identifiable, Hashable {
-    let id: String         // = path (dedup key)
+    let id: String         // = path（去重键）
     var path: String { id }
     var name: String { (path as NSString).lastPathComponent }
     var ext: String { (path as NSString).pathExtension.lowercased() }
@@ -48,27 +32,36 @@ final class AppViewModel: ObservableObject {
 
     @Published var ops: [DocOp] = []
     @Published var selectedOpID: String?
-    @Published var selectedTargetID: String?     // convert only
+    @Published var selectedTargetID: String?     // 单选槽（convert/renum/bidfinal）
+
+    @Published var optionValues: [String: Bool] = [:]
+
+    @Published var optionPaths: [String: String] = [:]
 
     @Published var files: [InputFile] = []
     @Published var results: [FileResult] = []
     @Published var lastLog: String = ""
-    @Published var summary: String = ""          // e.g. "成功 N/M"
+    @Published var summary: String = ""          // "成功 N/M" 之类
     @Published var statusText: String = "拖入文件或点「选择文件」，再挑一个操作。"
 
-    private let backend = BackendClient()
+    private let backend: BackendClient
+    init(backend: BackendClient = BackendClient()) { self.backend = backend }
 
     var selectedOp: DocOp? { ops.first { $0.id == selectedOpID } }
 
     var canRun: Bool {
         guard let op = selectedOp, !isRunning, !files.isEmpty else { return false }
         if op.needsTarget && (selectedTargetID?.isEmpty ?? true) { return false }
+        for o in op.options where o.required {
+            let filled = o.isFile ? !(optionPaths[o.id] ?? "").isEmpty : true
+            if !filled { return false }
+        }
         return true
     }
 
-    // MARK: - Startup: list operations
 
     func loadOps() async {
+        guard !isRunning, !isLoadingOps else { return }
         isLoadingOps = true
         defer { isLoadingOps = false }
         do {
@@ -81,15 +74,36 @@ final class AppViewModel: ObservableObject {
         } catch is CancellationError {
         } catch {
             banner = .error("加载操作列表失败：\(error.localizedDescription)")
-            statusText = "后端不可达（UI 不崩，先排查 uv / 路径）。"
+            statusText = "文档引擎未就绪，请重新打开或重新下载 DocKit。"
         }
     }
 
-    /// When the operation changes (e.g. clean → convert), reset the target to
-    /// the new operation's first destination format (or clear it).
     func onOpChanged() {
         results = []; lastLog = ""; summary = ""
         syncTargetDefault()
+        resetOptionsToDefaults()
+    }
+
+    func resetOptionsToDefaults() {
+        guard !isRunning else { return }
+        guard let op = selectedOp else { optionValues = [:]; optionPaths = [:]; return }
+        optionValues = Dictionary(uniqueKeysWithValues:
+            op.options.filter { !$0.isFile }.map { ($0.id, $0.defaultOn) })
+        optionPaths = [:]
+    }
+
+    var changedOptions: [String: String] {
+        guard let op = selectedOp else { return [:] }
+        var out: [String: String] = [:]
+        for o in op.options {
+            if o.isFile {
+                let p = optionPaths[o.id] ?? ""
+                if !p.isEmpty { out[o.id] = p }
+            } else if let v = optionValues[o.id], v != o.defaultOn {
+                out[o.id] = v ? "1" : "0"
+            }
+        }
+        return out
     }
 
     private func syncTargetDefault() {
@@ -99,9 +113,9 @@ final class AppViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Adding / removing files
 
     func addPaths(_ paths: [String]) {
+        guard !isRunning else { return }
         var seen = Set(files.map(\.id))
         for p in paths where !seen.contains(p) {
             files.append(InputFile(id: p)); seen.insert(p)
@@ -111,19 +125,20 @@ final class AppViewModel: ObservableObject {
     }
 
     func remove(_ f: InputFile) {
+        guard !isRunning else { return }
         files.removeAll { $0.id == f.id }
         statusText = files.isEmpty ? "已清空。" : "\(files.count) 个待处理。"
     }
 
     func clearFiles() {
+        guard !isRunning else { return }
         files = []; results = []; lastLog = ""; summary = ""
         statusText = "已清空。拖入文件或点「选择文件」。"
     }
 
-    // MARK: - Running an operation
 
     func run() async {
-        guard let op = selectedOp, !files.isEmpty else { return }
+        guard canRun, let op = selectedOp else { return }
         isRunning = true
         defer { isRunning = false }
         results = []; summary = ""; lastLog = ""
@@ -131,7 +146,8 @@ final class AppViewModel: ObservableObject {
         let target = op.needsTarget ? selectedTargetID : nil
         let paths = files.map(\.path)
         do {
-            let r = try await backend.run(op: op.id, target: target, files: paths)
+            let r = try await backend.run(op: op.id, target: target,
+                                          options: changedOptions, files: paths)
             results = r.results
             lastLog = r.log
             if op.wantsDir {
@@ -152,7 +168,6 @@ final class AppViewModel: ObservableObject {
         }
     }
 
-    /// Reveal an output (file or directory) in Finder.
     func reveal(_ path: String) {
         let url = URL(fileURLWithPath: path)
         NSWorkspace.shared.activateFileViewerSelecting([url])

@@ -770,19 +770,22 @@ def cmd_to_html(args):
         out = html_render_directory(target, args.output_dir)
         show_success(f"索引页: {out}")
         if not args.no_open:
-            webbrowser.open(f"file://{out}")
+            if os.environ.get("DOCKIT_NO_OPEN") != "1":
+                webbrowser.open(f"file://{out}")
     elif len(targets) > 1:
         tmpdir = Path(tempfile.mkdtemp())
         for f in targets:
             html_render_file(f, tmpdir)
         out = html_render_directory_from_files(targets, tmpdir)
         if not args.no_open:
-            webbrowser.open(f"file://{out}")
+            if os.environ.get("DOCKIT_NO_OPEN") != "1":
+                webbrowser.open(f"file://{out}")
     else:
         out = html_render_file(target, args.output_dir)
         show_success(f"{out}")
         if not args.no_open:
-            webbrowser.open(f"file://{out}")
+            if os.environ.get("DOCKIT_NO_OPEN") != "1":
+                webbrowser.open(f"file://{out}")
 
 
 # ════════════════════════════════════════════════════════════════════

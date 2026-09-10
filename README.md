@@ -1,95 +1,72 @@
-# DocTools
+# DocKit
 
-A native macOS batch document toolbox — **clean / convert / split / merge / preview** for docx · pptx · xlsx · md · csv, tuned for Chinese typography.
+Mac 上的本地文档工具：统一中文引号、整理标点与单位、转换格式、拆分和合并文件。原件保留，结果逐份列出。
 
-Drop files in, pick an operation, get per-file results with one-click "Reveal in Finder". The SwiftUI shell delegates all real work to a local Python backend (JSON over stdout) — nothing ever leaves your machine.
+**[产品主页与安装教程](https://app-mac-doctools.tianli.cyou/)** · [下载最新版](https://github.com/zengtianli/doc-tools/releases/latest) · [反馈问题](https://github.com/zengtianli/doc-tools/issues)
 
-![DocTools](docs/screenshot.png)
+## 安装
 
-## Why
+需要 **macOS 15 或更高版本、Apple Silicon Mac**。下载 `DocKit-v1.1.0-arm64.zip`，解压后把 `DocKit.app` 拖入「应用程序」。公开版 bundle ID 保持 `io.github.zengtianli.DocTools`，源码仓仍叫 doc-tools。
 
-- **Native SwiftUI, not Electron.** One small binary, real macOS sidebar/toolbar/dark mode, a ⌘K command palette — no web view, no daemon.
-- **Batch by drag-and-drop.** Drop any mix of files; every file gets its own success/failure line and output links.
-- **Chinese typography fixes built in.** Straight→curly quotes, full-width punctuation, spacing around units — the cleanup passes are tuned for Chinese documents.
-- **Fully local, zero cloud.** The backend is a Python script running on your Mac; no accounts, no telemetry, no uploads.
+发布包已经包含 Python 与文档依赖，常用操作不需要安装 uv、Python 或 Office，不需要账号，文件内容在本机处理。应用没有后台文档进程，执行任务时才启动引擎。
 
-## Features
+当前版本为 ad-hoc 签名，尚未经过 Apple 公证。若首次打开被系统阻止，先尝试打开，再到「系统设置 → 隐私与安全性」点「仍要打开」。来源确认可信但仍显示损坏时，可在终端执行：
 
-| Operation | What it does | Formats |
-|---|---|---|
-| **Clean** | Normalize documents in place: docx text repair (quotes/punctuation/units), markdown formatting, pptx style normalization, xlsx lowercase tidy-up | docx · md · pptx · xlsx |
-| **Convert** | docx/pptx → markdown; markdown → Word with a template; csv/xlsx/txt interconversion; legacy `.doc` upgraded via LibreOffice/textutil | docx · pptx · md · csv · xlsx · txt · doc |
-| **Merge** | Merge md/txt files into a single csv/xlsx | md · txt |
-| **Split** | Split markdown by heading; split xlsx by sheet | md · xlsx |
-| **View** | Markdown → styled HTML preview in your browser | md |
-
-## Requirements
-
-- macOS 15+ (Apple Silicon)
-- [uv](https://docs.astral.sh/uv/) — `brew install uv`. The backend declares its dependencies inline (PEP 723); on first run uv resolves and installs python-docx / openpyxl / python-pptx automatically, so **the very first operation can take a minute or two**. After that it's instant.
-- Optional: [LibreOffice](https://www.libreoffice.org/) for legacy `.doc` / `.xls` files.
-
-## Install
-
-**From a release:** download `DocTools-<version>-arm64.zip` from [Releases](../../releases), unzip, move `DocTools.app` to `/Applications`.
-
-The app is ad-hoc signed (no paid Apple Developer certificate), so macOS will quarantine the download. Clear it once:
-
-```bash
-xattr -cr "/Applications/DocTools.app"
+```sh
+xattr -cr "/Applications/DocKit.app"
 ```
 
-or right-click the app → Open, then allow it under **System Settings → Privacy & Security**.
+不需要 sudo。Intel Mac 暂未提供此安装包。老式 DOC/PPT 的复杂内容建议先用 LibreOffice 转成 DOCX/PPTX；DOCX、XLSX、CSV、Markdown 的常用路径已内置。
 
-**From source:**
+## 使用
 
-```bash
+1. 从左侧选择操作，也可以按 **⌘K** 搜索。
+2. 拖入文件或点「选择文件」，按需要选择目标格式和规则。
+3. 点「执行」，或按 **⌘↩**。执行中禁止修改输入或重复启动。
+4. 逐份查看结果；「在 Finder 显示」定位产出。成功 1/2 表示一份成功，一份仍需处理。
+
+每次任务先复制输入，写到第一份输入旁的 `DocKit 输出/<本次任务>`。原件不覆盖，包括字体统一、清除页眉页脚等操作。保留输入的副本是恢复和核对的依据。
+
+| 操作 | 支持范围 |
+|---|---|
+| 规范化 | DOCX、Markdown、PPTX 的文本整理；规则和 Word 范围可勾选 |
+| 引号统一 | DOCX、Markdown；仅修引号，可选择 Word 正文、表格、修订、批注、脚注及页眉页脚 |
+| 字体统一 | PPTX，含母版与版式 |
+| 英文小写整理 | XLSX/XLSM 数据行、DOCX 正文 |
+| 清页眉页脚 | DOCX 副本 |
+| 格式转换 | Word ↔ Markdown、PPTX → Markdown、CSV → XLSX、XLSX → CSV/TXT 等受支持组合 |
+| 拆分 | Markdown 按标题、XLSX/XLSM 按工作表 |
+| 合并 | 多份 Markdown 合一篇，多份 TXT 转 CSV |
+| 预览 | Markdown 生成本地 HTML，并在浏览器打开 |
+
+公开版不包含 PDF → Word、客户模板、标书终稿检查或私密扫描词库。格式转换不能保证原版面完全一致，正式交付前请打开输出检查。
+
+## 从源码构建
+
+构建需要 Xcode、Python 3、uv，首次构建需要网络下载锁定依赖。运行发布包不需要这些开发工具。
+
+```sh
 git clone https://github.com/zengtianli/doc-tools.git
 cd doc-tools
-./build.sh --install   # requires Xcode
+bash build.sh
+python3 scripts/verify-package.py
+bash scripts/check-ui-state.sh
 ```
 
-`build.sh` bundles the `backend/` directory into the app at `Contents/Resources/backend/`, so the built app is fully self-contained.
+产物：`build/DocKit.app`、`dist/DocKit-v1.1.0-arm64.zip` 和 `dist/release-manifest.json`。构建不自动替换本机安装版。文档引擎和受支持格式的依赖在 `Contents/Resources`，没有对作者工作区的运行时依赖。
 
-## FAQ
+`verify-package.py` 将整个应用复制到改名目录，在空 HOME、仅系统 PATH 和禁止网络的环境里执行真实文档任务，检查输出、原件哈希和应用签名。测试使用脚本生成的虚构文档，不读取个人文件。`check-ui-state.sh` 通过生产 BackendClient 和 ViewModel 检查选项解码、运行中输入隔离和防重入。
 
-**Where do my files go?**
-Nowhere. Everything runs locally; outputs are written next to your input files and listed in the results panel.
+## 网站和发布
 
-**"找不到 uv" on launch?**
-Install uv (`brew install uv`) and reopen the app. GUI apps don't see your shell `PATH`, so DocTools looks for uv at the standard install locations (`/opt/homebrew/bin`, `/usr/local/bin`, `~/.local/bin`).
+`VERSION` 是版本源，`scripts/package.py` 从实际安装包生成哈希与发行清单。`scripts/build-site.py` 生成 `build/site/` 与显式公开白名单 `site-manifest.json`；`--preview` 仅供本地预览，正式构建必须有匹配版本的真实媒体。
 
-**Why is the first run slow?**
-uv is creating the backend's Python environment (PEP 723 inline dependencies). It's a one-time cost.
+`python3 scripts/publish.py` 准备并验证发行与网站；明确发布时加 `--upload`，已有同名 Release 会拒绝覆盖。网站包交给现有部署入口消费，发布脚本不更改服务器配置。真实录制要求见 `docs/demo/plan.md`，原片留在 gitignored build/tutorial/raw/。
 
-## 简体中文
+## 许可
 
-DocTools 是一个原生 macOS 批量文档工具箱：清洗 / 转换 / 拆分 / 合并 / 预览，
-支持 docx · pptx · xlsx · md · csv，针对中文排版优化（弯引号、标点、单位间距）。
+原创代码采用 [MIT](LICENSE)。运行时及依赖许可证随安装包保留，说明见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。公开产品独立发版，只按需同步上游通用修复；客户资源和私有业务能力不进入公开包。
 
-- 原生 SwiftUI，非 Electron；拖放批量处理，逐文件显示结果
-- 全本地运行，零云端、零上传
-- 依赖 [uv](https://docs.astral.sh/uv/)（`brew install uv`）；首次运行会自动安装
-  python-docx / openpyxl / python-pptx，需 1–2 分钟，之后秒开
-- 老 `.doc` / `.xls` 需要安装 LibreOffice（可选）
-- 安装：从 Releases 下载 zip 解压到 `/Applications`，首次运行前执行
-  `xattr -cr "/Applications/DocTools.app"`；或 `./build.sh --install` 从源码构建
+## English
 
-## License
-
-[MIT](LICENSE)
-
-## 与私有版的关系
-
-`backend/` 是私有版 `~/Dev/tools/doctools` 的**单向快照**，私有版发版才同步（2026-08-10 定；
-日常私有 commit 不追平。本次同步了
-「规范化」的选项声明：修哪些内容 × 改哪些范围）。
-
-`Sources/`（SwiftUI 壳）**已刻意分叉**，不跟私有版同步 —— 所以后端声明的 `options`
-在本公开版里暂不渲染成勾选框，改用命令行 `--opt K=V`：
-
-```bash
-python3 backend/doc_gui_backend.py gui-ops          # 看某个 op 有哪些可选项
-python3 backend/doc_gui_backend.py gui-run --op clean \
-        --opt scope.comments=0 --opt rule.units=0 --files a.docx
-```
+DocKit is a native macOS document toolbox for Chinese typography, conversion, splitting and merging. It works on copies and preserves your original files. The release bundles its Python runtime and document dependencies, so supported local operations need no account, uv or Python installation. Requires Apple Silicon and macOS 15+. The current build is ad-hoc signed and not notarized. See the product website for installation, real demonstrations and supported formats.

@@ -1,36 +1,16 @@
 import Foundation
 
-// =============================================================================
-// DocTools — Codable contract (mirrors the Python backend's JSON)
-//
-// Contract conventions:
-//   · Every gui-* subcommand exits 0; success = {"ok": true, ...},
-//     failure = {"ok": false, "error": "human-readable message"}.
-//   · The decoder uses .convertFromSnakeCase: display_path → displayPath etc.
-//     map automatically. Backend fields are snake_case throughout, so the
-//     Swift side never writes renaming CodingKeys.
-//   · Every display field decodes with decodeIfPresent + a default — one
-//     missing field from the backend must never fail the whole decode
-//     (one bad row must never take down the whole list). The Decodable init
-//     lives in an extension so the memberwise init stays available.
-// =============================================================================
 
-// MARK: - Envelope probe
 
-/// First-pass probe for runDecoding: {ok, error}. ok == false throws the
-/// error text as-is.
 struct BackendProbe: Decodable {
     let ok: Bool?
     let error: String?
 }
 
-/// Legacy failure envelope (non-zero exit + {"error"}) — operational
-/// subcommands are allowed to fail in this shape.
 struct BackendErrorEnvelope: Codable {
     let error: String
 }
 
-// MARK: - Decoding helpers (shorthand for decodeIfPresent + default)
 
 extension KeyedDecodingContainer {
     func str(_ key: Key, _ fallback: String = "") -> String {
@@ -47,9 +27,7 @@ extension KeyedDecodingContainer {
     }
 }
 
-// MARK: - gui-ops: the operation catalog (the UI renders its menu from this)
 
-/// Destination-format option, used by convert only.
 struct OpTarget: Identifiable, Hashable {
     let id: String       // "md" / "word" / "xlsx" / "csv" / "txt"
     let title: String    // "Markdown" / "Word" …
@@ -62,35 +40,89 @@ extension OpTarget: Decodable {
     }
 }
 
-/// One document operation (clean / convert / split / merge / …).
+struct OpOption: Identifiable, Hashable, Decodable {
+    let id: String            // "rule.quotes" / "scope.comments" / "ref"
+    let group: String         // 归属分组 id
+    let type: String          // "bool"（勾选框）/ "file"（文件选择器）
+    let title: String
+    let note: String          // 副标题（可空）
+    let defaultOn: Bool
+    let exts: [String]        // type=file 时限定可选后缀（空 = 不限）
+    let required: Bool        // 必填：空值时禁用「执行」
+
+    var isFile: Bool { type == "file" }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, group, type, title, note, `default`, exts, required
+    }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = c.str(.id); group = c.str(.group, "")
+        type = c.str(.type, "bool"); title = c.str(.title)
+        note = c.str(.note, "")
+        defaultOn = (try? c.decodeIfPresent(Bool.self, forKey: .default)) ?? nil ?? true
+        exts = (try? c.decodeIfPresent([String].self, forKey: .exts)) ?? nil ?? []
+        required = (try? c.decodeIfPresent(Bool.self, forKey: .required)) ?? nil ?? false
+    }
+}
+
+struct OpOptionGroup: Identifiable, Hashable, Decodable {
+    let id: String
+    let title: String
+    let danger: Bool          // true → 红色标题 + 默认折叠
+    let appliesTo: [String]   // 只对这些后缀有意义（空 = 全部）
+
+    private enum CodingKeys: String, CodingKey { case id, title, danger, appliesTo }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = c.str(.id); title = c.str(.title)
+        danger = (try? c.decodeIfPresent(Bool.self, forKey: .danger)) ?? nil ?? false
+        appliesTo = (try? c.decodeIfPresent([String].self, forKey: .appliesTo)) ?? nil ?? []
+    }
+}
+
 struct DocOp: Identifiable, Hashable {
-    let id: String          // operation id, passed to gui-run --op
-    let verb: String        // underlying dispatcher verb
-    let title: String       // display title
-    let subtitle: String    // one-line description
+    let id: String          // 操作 id，传给 gui-run --op
+    let verb: String        // 底层 doc_dispatch 动词
+    let title: String       // 中文标题
+    let aliases: String     // 英文/别名搜索词（后端声明；⌘K 面板用）
+    let subtitle: String    // 一行说明
     let icon: String        // SF Symbol
-    let exts: [String]      // supported source extensions (drag-in hint)
-    let kind: String        // "files" (multiple files) / "dir" (one directory)
-    let targets: [OpTarget] // convert only; empty otherwise
+    let exts: [String]      // 支持的源后缀（拖入提示用）
+    let kind: String        // "files"（多文件）/ "dir"（单目录）
+    let targets: [OpTarget] // 单选参数槽（convert 目标格式 / renum 范围 / bidfinal 模式）
+    let danger: Bool        // 破坏性动词（原地覆写 / 不可撤销）→ UI 标红
+    let optionGroups: [OpOptionGroup]  // 勾选项分组（后端声明，可空）
+    let options: [OpOption]            // 勾选项（后端声明，可空）
 
     var needsTarget: Bool { !targets.isEmpty }
+    var hasOptions: Bool { !options.isEmpty }
+    var groupedOptions: [(group: OpOptionGroup, items: [OpOption])] {
+        optionGroups.compactMap { g in
+            let items = options.filter { $0.group == g.id }
+            return items.isEmpty ? nil : (g, items)
+        }
+    }
     var wantsDir: Bool { kind == "dir" }
 }
 extension DocOp: Decodable {
     private enum CodingKeys: String, CodingKey {
-        case id, verb, title, subtitle, icon, exts, kind, targets
+        case id, verb, title, subtitle, icon, exts, kind, targets, options, optionGroups, danger, aliases
     }
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = c.str(.id); verb = c.str(.verb)
         title = c.str(.title); subtitle = c.str(.subtitle)
+        aliases = c.str(.aliases)
         icon = c.str(.icon, "doc"); kind = c.str(.kind, "files")
         exts = (try? c.decodeIfPresent([String].self, forKey: .exts)) ?? nil ?? []
         targets = (try? c.decodeIfPresent([OpTarget].self, forKey: .targets)) ?? nil ?? []
+        options = (try? c.decodeIfPresent([OpOption].self, forKey: .options)) ?? nil ?? []
+        optionGroups = (try? c.decodeIfPresent([OpOptionGroup].self, forKey: .optionGroups)) ?? nil ?? []
+        danger = (try? c.decodeIfPresent(Bool.self, forKey: .danger)) ?? nil ?? false
     }
 }
 
-/// `gui-ops` → {"ok": true, "ops": [...]}
 struct OpsResult: Decodable {
     let ok: Bool
     let ops: [DocOp]
@@ -102,16 +134,14 @@ struct OpsResult: Decodable {
     }
 }
 
-// MARK: - gui-run: per-file results
 
-/// Result for one input. outputs = absolute paths of produced files/dirs.
 struct FileResult: Identifiable, Hashable {
     let id = UUID()
-    let input: String      // input absolute path (or "a + b" for merge)
-    let name: String       // display name
+    let input: String      // 输入绝对路径（或 merge 的 "a + b"）
+    let name: String       // 展示名
     let ok: Bool
-    let outputs: [String]  // produced absolute paths
-    let message: String    // one-line human-readable result
+    let outputs: [String]  // 产出绝对路径
+    let message: String    // 一行人话结果
 }
 extension FileResult: Decodable {
     private enum CodingKeys: String, CodingKey { case input, name, ok, outputs, message }
@@ -124,7 +154,6 @@ extension FileResult: Decodable {
     }
 }
 
-/// `gui-run` → {"ok", "op", "results":[...], "succeeded", "total", "log", "skipped_missing"?}
 struct RunResult: Decodable {
     let ok: Bool
     let op: String

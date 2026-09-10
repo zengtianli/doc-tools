@@ -26,8 +26,11 @@ struct DocToolsApp: App {
         WindowGroup {
             ContentView()
         }
-        .defaultSize(width: 1000, height: 680)
+        .defaultSize(width: 1060, height: 760)
         .commands {
+            CommandGroup(replacing: .help) {
+                Link("DocKit 使用教程", destination: URL(string: "https://app-mac-doctools.tianli.cyou/#install")!)
+            }
             CommandMenu("操作") {
                 Button("搜索功能…") {
                     NotificationCenter.default.post(name: .tlPaletteToggle, object: nil)

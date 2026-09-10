@@ -29,6 +29,10 @@ import json
 import re
 import subprocess
 import sys
+import shutil
+import uuid
+import os
+from datetime import datetime
 from pathlib import Path
 
 # 终端日志带 ANSI 色码(\x1b[..m),是裸控制字符;塞进 JSON 字符串会让解码器报
@@ -138,17 +142,17 @@ OPS = [
         "id": "fontunify",
         "verb": "fontunify",
         "title": "字体统一",
-        "subtitle": "pptx 全篇(含母版/版式)统一字体 ⚠原地覆写原文件(留 .backup)",
+        "subtitle": "统一 PowerPoint 字体；处理副本，保留原文件",
         "icon": "textformat",
         "exts": ["pptx"],
         "kind": "files",
-        "danger": True,
+        "danger": False,
     },
     {
         "id": "lowercase",
         "verb": "lowercase",
         "title": "英文小写整理",
-        "subtitle": "xlsx 数据行 / docx 正文里的英文转小写(语义级数据改写)",
+        "subtitle": "Excel 数据行或 Word 正文中的英文转小写；另存副本",
         "icon": "textformat.abc",
         "exts": ["xlsx", "xlsm", "docx"],
         "kind": "files",
@@ -158,7 +162,7 @@ OPS = [
         "id": "stripchrome",
         "verb": "stripchrome",
         "title": "清页眉页脚",
-        "subtitle": "删除 docx 的页眉页脚引用,一个字不改 ⚠不可撤销(产出 _fixed 副本)",
+        "subtitle": "另存一份不带页眉页脚的 Word；正文不变",
         "icon": "rectangle.topthird.inset.filled",
         "exts": ["docx"],
         "kind": "files",
@@ -300,6 +304,38 @@ def _run_verb_capture(verb: str, files: list[str], target: str | None,
 
 
 def gui_run(op_id: str, files: list[str], target: str | None, opts: dict | None = None) -> dict:
+    """Each GUI operation works on isolated copies, never the user's originals."""
+    op = _OPS_BY_ID.get(op_id)
+    if op is None:
+        return {"ok": False, "error": f"未知操作: {op_id}"}
+    valid = [Path(f).resolve() for f in files if Path(f).is_file()]
+    if not valid:
+        return {"ok": False, "error": "请选择至少一个有效文件"}
+    name = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + op["title"] + "-" + uuid.uuid4().hex[:6]
+    output_root = Path(os.environ["DOCKIT_OUTPUT_DIR"]).expanduser() if os.environ.get("DOCKIT_OUTPUT_DIR") else valid[0].parent / "DocKit 输出"
+    workspace = output_root / name
+    workspace.mkdir(parents=True, exist_ok=False)
+    originals = {}
+    staged = []
+    for source in valid:
+        destination = workspace / source.name
+        index = 2
+        while destination.exists():
+            destination = workspace / f"{source.stem}-{index}{source.suffix}"
+            index += 1
+        shutil.copy2(source, destination)
+        staged.append(str(destination))
+        originals[str(destination)] = str(source)
+    result = _gui_run_copies(op_id, staged, target, opts)
+    for row in result.get("results", []):
+        row["input"] = originals.get(row["input"], row["input"])
+    missing = [Path(f).name for f in files if not Path(f).is_file()]
+    if missing:
+        result["skipped_missing"] = missing
+    return result
+
+
+def _gui_run_copies(op_id: str, files: list[str], target: str | None, opts: dict | None = None) -> dict:
     op = _OPS_BY_ID.get(op_id)
     if not op:
         return {"ok": False, "error": f"未知操作: {op_id}(支持 {', '.join(_OPS_BY_ID)})"}
@@ -369,11 +405,22 @@ def gui_run(op_id: str, files: list[str], target: str | None, opts: dict | None 
     results = []
     full_log: list[str] = []
     for f in existing:
+        ext = Path(f).suffix.lower().lstrip(".")
+        supported = ext in op["exts"]
+        if op_id == "convert":
+            supported = (ext == "doc" and target in ("word", "md", "txt")) or dd.route_convert(f, target) is not None
+        if not supported:
+            results.append({"input": f, "name": Path(f).name, "ok": False, "outputs": [],
+                            "message": f"该操作不支持 {ext or '此格式'}"})
+            continue
         roots = _scan_roots([f])
         before = _snapshot(roots)
         rc, log = _run_verb_capture(op["verb"], [f], target, opts)
         full_log.append(log.strip())
         outs = _new_outputs(before, _snapshot(roots), {f})
+        # In-place engines operate on this staged copy, so return that copy as well.
+        if rc == 0 and (not outs or op_id in ("fontunify",)):
+            outs = [f] + [p for p in outs if not p.endswith(".backup")]
         ok = rc == 0 and bool(outs)
         results.append({
             "input": f,

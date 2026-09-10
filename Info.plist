@@ -13,7 +13,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>DocTools</string>
+	<string>DocKit</string>
+	<key>CFBundleDisplayName</key>
+	<string>DocKit</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -23,7 +25,7 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>15.0</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>DocTools</string>
+	<string>DocKit</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

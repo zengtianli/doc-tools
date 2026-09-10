@@ -143,10 +143,10 @@ def route_convert(f: str, target: str) -> tuple[list[str], str] | None:
         ("csv", "txt"): (_data("convert.py", "csv-to-txt", f), "CSV → txt"),
         ("xlsx", "txt"): (_data("convert.py", "xlsx-to-txt", f), "Excel → txt"),
     }
-    # docx→md 走 markitdown(经 uvx 临时环境调用,无需预装)
+    # Use the packaged interpreter and the packaged converter; no runtime download.
     if e == "docx" and target == "md":
         out = str(Path(f).with_suffix(".md"))
-        return ["uvx", "markitdown", f, "-o", out], "docx → Markdown(markitdown)"
+        return [PY, "-m", "markitdown", f, "-o", out], "docx → Markdown"
     hit = M.get((e, target))
     return (hit[0], hit[1]) if hit else None
 
