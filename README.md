@@ -1,5 +1,7 @@
 # DocKit
 
+**中文** | [English](README_EN.md)
+
 Mac 上的本地文档工具：统一中文引号、整理标点与单位、转换格式、拆分和合并文件。原件保留，结果逐份列出。
 
 **[产品主页与安装教程](https://app-mac-doctools.tianli.cyou/)** · [下载最新版](https://github.com/zengtianli/doc-tools/releases/latest) · [反馈问题](https://github.com/zengtianli/doc-tools/issues)
