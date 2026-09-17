@@ -26,6 +26,7 @@ build-runtime.log
 # release artifacts
 *.zip
 catalog.yaml
+project.yaml
 
 # Local tooling config — not part of the published project.
 .claude/
