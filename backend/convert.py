@@ -206,11 +206,21 @@ def _xlsx_to_txt(input_file: Path, output_file: Path | None = None, **_kw) -> bo
     return True
 
 
-def _csv_merge_txt(target_dir: Path, output_file: Path | None = None, **_kw) -> bool:
-    """合并目录中所有 TXT 文件为一个 CSV（按列拼接）"""
+def _csv_merge_txt(target: Path | list[Path], output_file: Path | None = None, **_kw) -> bool:
+    """合并 TXT 文件为一个 CSV（按列拼接）。target 是目录（取其中全部 .txt）或 .txt 文件列表
+    （DocKit 的「合并」传的是用户选中的文件）；输出默认 merged.csv，与第一个文件同目录。"""
+    if isinstance(target, (list, tuple)):
+        txt_files = sorted(Path(t) for t in target)
+        not_txt = [f.name for f in txt_files if f.suffix.lower() != ".txt"]
+        if not txt_files or not_txt:
+            show_error(f"只能合并 .txt 文件: {', '.join(not_txt) or '未提供文件'}")
+            return False
+        target_dir = txt_files[0].parent
+    else:
+        target_dir = target
+        txt_files = sorted(target_dir.glob("*.txt"))
     if output_file is None:
         output_file = target_dir / "merged.csv"
-    txt_files = sorted(target_dir.glob("*.txt"))
     if not txt_files:
         show_error(f"目录 '{target_dir}' 中未找到 .txt 文件")
         return False
@@ -460,8 +470,11 @@ def main():
     if conv.get("deps") and not check_python_packages(*conv["deps"]):
         sys.exit(1)
 
-    # csv-merge-txt 特殊处理：输入是目录
+    # csv-merge-txt 特殊处理：输入是目录 [输出文件]，或多个 .txt 文件
     if conv.get("special"):
+        given = [Path(a) for a in unknown]
+        if given and all(p.is_file() for p in given):
+            sys.exit(0 if conv["fn"](given, None) else 1)
         if unknown:
             target_dir = Path(unknown[0])
         else:
@@ -470,8 +483,7 @@ def main():
         output_file = Path(unknown[1]) if len(unknown) > 1 else None
         if not target_dir.is_dir():
             fatal_error(f"不是有效目录: {target_dir}")
-        conv["fn"](target_dir, output_file)
-        return
+        sys.exit(0 if conv["fn"](target_dir, output_file) else 1)
 
     # 标准转换流程
     src_ext = conv["src_ext"]

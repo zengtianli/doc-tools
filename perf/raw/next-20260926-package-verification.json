@@ -1,0 +1,318 @@
+{
+  "version": "1.1.0",
+  "network": "denied by sandbox-exec",
+  "ambient_home": "empty",
+  "path": "/usr/bin:/bin",
+  "relocation": "renamed application directory",
+  "originals_unchanged": true,
+  "cases": [
+    {
+      "operation": "quotes",
+      "targets": [
+        "--opt",
+        "scope.headers=0"
+      ],
+      "inputs": [
+        "活动说明.docx"
+      ],
+      "seconds": 0.243
+    },
+    {
+      "operation": "clean",
+      "targets": [],
+      "inputs": [
+        "活动说明.docx"
+      ],
+      "seconds": 0.219
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "md"
+      ],
+      "inputs": [
+        "活动说明.docx"
+      ],
+      "seconds": 0.911
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "word"
+      ],
+      "inputs": [
+        "读书会流程.md"
+      ],
+      "seconds": 0.371
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "xlsx"
+      ],
+      "inputs": [
+        "报名统计.csv"
+      ],
+      "seconds": 0.247
+    },
+    {
+      "operation": "split",
+      "targets": [],
+      "inputs": [
+        "读书会流程.md"
+      ],
+      "seconds": 0.134
+    },
+    {
+      "operation": "split",
+      "targets": [],
+      "inputs": [
+        "活动统计.xlsx"
+      ],
+      "seconds": 0.501
+    },
+    {
+      "operation": "merge",
+      "targets": [],
+      "inputs": [
+        "读书会流程.md",
+        "补充说明.md"
+      ],
+      "seconds": 0.146
+    },
+    {
+      "operation": "fontunify",
+      "targets": [],
+      "inputs": [
+        "读书会介绍.pptx"
+      ],
+      "seconds": 0.307
+    },
+    {
+      "operation": "lowercase",
+      "targets": [],
+      "inputs": [
+        "活动统计.xlsx"
+      ],
+      "seconds": 0.308
+    },
+    {
+      "operation": "stripchrome",
+      "targets": [],
+      "inputs": [
+        "活动说明.docx"
+      ],
+      "seconds": 0.277
+    },
+    {
+      "operation": "view",
+      "targets": [],
+      "inputs": [
+        "读书会流程.md"
+      ],
+      "seconds": 0.185
+    },
+    {
+      "operation": "clean",
+      "targets": [],
+      "inputs": [
+        "读书会介绍.pptx"
+      ],
+      "seconds": 0.424
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "md"
+      ],
+      "inputs": [
+        "读书会介绍.pptx"
+      ],
+      "seconds": 0.577
+    },
+    {
+      "operation": "clean",
+      "targets": [],
+      "inputs": [
+        "读书会流程.md"
+      ],
+      "seconds": 0.43
+    },
+    {
+      "operation": "quotes",
+      "targets": [],
+      "inputs": [
+        "读书会流程.md"
+      ],
+      "seconds": 0.356
+    },
+    {
+      "operation": "lowercase",
+      "targets": [],
+      "inputs": [
+        "活动说明.docx"
+      ],
+      "seconds": 0.323
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "word"
+      ],
+      "inputs": [
+        "活动说明.docx"
+      ],
+      "seconds": 0.676
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "csv"
+      ],
+      "inputs": [
+        "活动统计.xlsx"
+      ],
+      "seconds": 0.413
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "txt"
+      ],
+      "inputs": [
+        "活动统计.xlsx"
+      ],
+      "seconds": 0.845
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "txt"
+      ],
+      "inputs": [
+        "报名统计.csv"
+      ],
+      "seconds": 0.189
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "xlsx"
+      ],
+      "inputs": [
+        "报名表.txt"
+      ],
+      "seconds": 0.909
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "csv"
+      ],
+      "inputs": [
+        "空格表.txt"
+      ],
+      "seconds": 0.191
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "md"
+      ],
+      "inputs": [
+        "旧版说明.doc"
+      ],
+      "seconds": 1.448
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "word"
+      ],
+      "inputs": [
+        "旧版说明.doc"
+      ],
+      "seconds": 0.729
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "txt"
+      ],
+      "inputs": [
+        "旧版说明.doc"
+      ],
+      "seconds": 0.141
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "md"
+      ],
+      "inputs": [
+        "网页导出.docx"
+      ],
+      "seconds": 1.037
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "md"
+      ],
+      "inputs": [
+        "纯文本.docx"
+      ],
+      "seconds": 1.079
+    },
+    {
+      "operation": "merge",
+      "targets": [],
+      "inputs": [
+        "报名表.txt",
+        "报名表2.txt"
+      ],
+      "seconds": 0.198
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "xlsx"
+      ],
+      "inputs": [
+        "活动统计.xls"
+      ],
+      "seconds": 0.413
+    },
+    {
+      "operation": "convert",
+      "targets": [
+        "--to",
+        "md"
+      ],
+      "inputs": [
+        "读书会介绍.ppt"
+      ],
+      "seconds": 2.238,
+      "sandbox": "IP denied; /private/tmp unix sockets allowed for LibreOffice"
+    }
+  ],
+  "partial_success": true,
+  "invalid_options_rejected": true,
+  "legacy_ppt_without_libreoffice": "explicit failure: 老版 .ppt 不能直接转 Markdown:请先在 PowerPoint 或 Keynote 里另存为 .pptx 再转换(装了 LibreOffice 时 DocKit 会自动先转成 .pptx)"
+}

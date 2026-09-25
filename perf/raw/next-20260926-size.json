@@ -1,0 +1,52 @@
+{
+ "method": "measure.py size：下载包=文件字节数；安装后=du -sk ×1024（实际占用块，含包内全部资源）",
+ "release_v1.1.0": {
+  "download_bytes": 77124311,
+  "installed_bytes": 251797504,
+  "files": 6833,
+  "download": "dist/DocKit-v1.1.0-arm64.zip"
+ },
+ "next": {
+  "download_bytes": 44766484,
+  "installed_bytes": 133160960,
+  "files": 4637,
+  "download": "build/perf-next/DocKit-v1.1.0-arm64.zip"
+ },
+ "next_without_bytecode_for_comparison": {
+  "download_bytes": 35652148,
+  "installed_bytes": 109084672,
+  "note": "同一构建删掉全部 __pycache__ 的对照，用来量预编译字节码的体积代价"
+ },
+ "slim_runtime_report": {
+  "runtime_bytes_before": 230839254,
+  "runtime_bytes_after": 117602842,
+  "removed_bytes_by_rule": {
+   "dists": 84424477,
+   "devfiles": 3627319,
+   "tests": 19871691,
+   "stdlib": 14784694,
+   "lxml": 5245392,
+   "strip": 6704000
+  },
+  "removed_modules": 479,
+  "import_guard_files_parsed": 1648,
+  "import_guard_allowed": [
+   "PIL/ImageTk.py -> tkinter",
+   "PIL/_tkinter_finder.py -> tkinter",
+   "markitdown/_markitdown.py -> magika",
+   "pydoc.py -> pydoc_data"
+  ],
+  "bytecode_files": 1169,
+  "bytecode_bytes_added": 21421161,
+  "dropped_distributions": {
+   "magika": "markitdown content-type sniffer; backend/docx_to_md.py registers a small sniffer in its place",
+   "onnxruntime": "model runtime used only by magika",
+   "flatbuffers": "required only by onnxruntime",
+   "protobuf": "required only by onnxruntime",
+   "packaging": "required only by onnxruntime",
+   "click": "magika's command line",
+   "python-dotenv": "magika's command line configuration"
+  }
+ },
+ "remeasured": "2026-09-26 修复轮重建后"
+}

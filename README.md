@@ -6,6 +6,18 @@ Mac 上的本地文档工具：统一中文引号、整理标点与单位、转�
 
 **[产品主页与安装教程](https://app-mac-doctools.tianli.cyou/)** · [下载最新版](https://github.com/zengtianli/doc-tools/releases/latest) · [反馈问题](https://github.com/zengtianli/doc-tools/issues)
 
+<!-- lightweight:start -->
+## 轻量（本机实测）
+
+| 安装包 | 空闲内存 | 空闲 CPU | 冷启动到窗口出现 |
+|---|---|---|---|
+| **77.1 MB**（装好后 252 MB） | **46 MB** | **0.06%** | **981 ms** |
+
+SwiftUI 界面；文档处理靠包内 Python 3.12 与 pandas 等库，只在启动读操作列表和点「执行」时起子进程、做完即退出，空闲只剩界面进程；包内含完整 Python，体积较大。
+
+<sub>v1.1.0 · Mac16,12 / Apple M4 / macOS 27.2 · 2026-09-26 本机实测。内存为 phys_footprint（活动监视器「内存」列同口径）；CPU 为静置后 60 秒内 CPU 时间 ÷ 墙钟；大小按十进制 MB。原始数据见 [perf/lightweight.json](perf/lightweight.json)。</sub>
+<!-- lightweight:end -->
+
 ## 安装
 
 需要 **macOS 15 或更高版本、Apple Silicon Mac**。下载 `DocKit-v1.1.0-arm64.zip`，解压后把 `DocKit.app` 拖入「应用程序」。公开版 bundle ID 保持 `io.github.zengtianli.DocTools`，源码仓仍叫 doc-tools。
@@ -57,7 +69,9 @@ bash scripts/check-ui-state.sh
 
 产物：`build/DocKit.app`、`dist/DocKit-v1.1.0-arm64.zip` 和 `dist/release-manifest.json`。构建不自动替换本机安装版。文档引擎和受支持格式的依赖在 `Contents/Resources`，没有对作者工作区的运行时依赖。
 
-`verify-package.py` 将整个应用复制到改名目录，在空 HOME、仅系统 PATH 和禁止网络的环境里执行真实文档任务，检查输出、原件哈希和应用签名。测试使用脚本生成的虚构文档，不读取个人文件。`check-ui-state.sh` 通过生产 BackendClient 和 ViewModel 检查选项解码、运行中输入隔离和防重入。
+打包时 `scripts/slim-runtime.py` 去掉运行时用不到的部分（magika/onnxruntime、各包测试目录、Tk 等；仍被导入的模块会让构建失败），并为各项操作用到的模块预编译 unchecked-hash 的 `.pyc`。Python 不会拿这些 `.pyc` 与 `.py` 比对，所以直接修改构建好的 `DocKit.app` 里的 `.py` 不会触发重新编译，仍运行旧字节码；改后端请改源码后重新构建。
+
+`verify-package.py` 将整个应用复制到改名目录，在空 HOME、仅系统 PATH 和禁止网络的环境里执行真实文档任务，检查输出、原件哈希和应用签名。测试使用脚本生成的虚构文档，不读取个人文件；装有 LibreOffice 时的老 .ppt 用例只额外放行 /tmp 下的本地 socket，IP 网络仍禁止。每项操作默认 90 秒超时，较慢的机器可设 `DOCKIT_VERIFY_TIMEOUT=秒数` 调高。`check-ui-state.sh` 通过生产 BackendClient 和 ViewModel 检查选项解码、运行中输入隔离和防重入。
 
 ## 网站和发布
 

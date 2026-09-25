@@ -1,0 +1,179 @@
+{
+ "rounds": 3,
+ "apps": {
+  "release": "<dist/DocKit-v1.1.0-arm64.zip 解压副本>/DocKit.app",
+  "slim-nopyc": "<perf-next 去掉 __pycache__ 的对照副本>/DocKit.app",
+  "perf-next": "build/perf-next/DocKit.app"
+ },
+ "loadavg_per_round": [
+  [
+   304.2509765625,
+   239.3681640625,
+   243.03759765625
+  ],
+  [
+   287.42431640625,
+   246.7958984375,
+   245.4912109375
+  ],
+  [
+   250.623046875,
+   243.22705078125,
+   244.27734375
+  ]
+ ],
+ "results": {
+  "release": {
+   "gui-ops": {
+    "median_s": 0.617,
+    "runs_s": [
+     1.319,
+     0.617,
+     0.4
+    ]
+   },
+   "clean docx": {
+    "median_s": 3.146,
+    "runs_s": [
+     3.146,
+     3.846,
+     1.283
+    ]
+   },
+   "docx→md": {
+    "median_s": 9.872,
+    "runs_s": [
+     10.746,
+     9.872,
+     6.267
+    ]
+   },
+   "xlsx→txt": {
+    "median_s": 4.576,
+    "runs_s": [
+     4.576,
+     9.385,
+     4.54
+    ]
+   },
+   "pptx→md": {
+    "median_s": 2.1,
+    "runs_s": [
+     3.149,
+     1.731,
+     2.1
+    ]
+   },
+   "md→word": {
+    "median_s": 3.136,
+    "runs_s": [
+     3.136,
+     2.947,
+     4.133
+    ]
+   }
+  },
+  "slim-nopyc": {
+   "gui-ops": {
+    "median_s": 0.628,
+    "runs_s": [
+     1.638,
+     0.628,
+     0.395
+    ]
+   },
+   "clean docx": {
+    "median_s": 2.623,
+    "runs_s": [
+     3.186,
+     2.623,
+     1.256
+    ]
+   },
+   "docx→md": {
+    "median_s": 10.026,
+    "runs_s": [
+     10.026,
+     11.306,
+     8.623
+    ]
+   },
+   "xlsx→txt": {
+    "median_s": 6.793,
+    "runs_s": [
+     6.793,
+     9.881,
+     3.931
+    ]
+   },
+   "pptx→md": {
+    "median_s": 2.211,
+    "runs_s": [
+     2.211,
+     2.932,
+     1.443
+    ]
+   },
+   "md→word": {
+    "median_s": 4.068,
+    "runs_s": [
+     3.525,
+     4.068,
+     4.116
+    ]
+   }
+  },
+  "perf-next": {
+   "gui-ops": {
+    "median_s": 0.285,
+    "runs_s": [
+     0.285,
+     0.582,
+     0.139
+    ]
+   },
+   "clean docx": {
+    "median_s": 0.813,
+    "runs_s": [
+     1.398,
+     0.813,
+     0.41
+    ]
+   },
+   "docx→md": {
+    "median_s": 4.135,
+    "runs_s": [
+     4.135,
+     3.692,
+     5.941
+    ]
+   },
+   "xlsx→txt": {
+    "median_s": 1.952,
+    "runs_s": [
+     1.952,
+     2.004,
+     1.552
+    ]
+   },
+   "pptx→md": {
+    "median_s": 0.689,
+    "runs_s": [
+     0.401,
+     0.689,
+     0.94
+    ]
+   },
+   "md→word": {
+    "median_s": 1.187,
+    "runs_s": [
+     1.74,
+     0.953,
+     1.187
+    ]
+   }
+  }
+ },
+ "method": "每个操作直接调用应用内 python3.12 -s -B backend/doc_gui_backend.py（与 App 同参数、同环境变量），空 HOME、PATH=/usr/bin:/bin；三个版本按操作交替各跑 3 轮取中位数；输入为 make-demo.py 生成的虚构文档",
+ "load_note": "本机负载均值约 200–300（其他会话的编译/索引），绝对秒数偏大，三版同窗口交替测量可比"
+}

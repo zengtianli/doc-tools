@@ -7,6 +7,9 @@ import html
 import json
 import shutil
 import subprocess
+import sys
+sys.path.insert(0, str(Path.home() / "Apps/apps-portal/site"))
+import perf_block  # shared lightweight block; numbers come from perf/lightweight.json
 import zipfile
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -66,7 +69,7 @@ if (media/"tutorial.mp4").is_file():
         if (media/name).is_file(): shutil.copy2(media/name,out/"media"/name)
     tutorial='<div class="demo-actions"><a class="text-link" href="media/tutorial.mp4" download>下载三段完整演示 ↓</a></div>'
 replacements={"VERSION":release["version"],"FILENAME":archive.name,"DOWNLOAD":"downloads/"+archive.name,
-              "SIZE":f'{release["bytes"]/1024/1024:.1f} MB',"SCREENSHOT":shot,"VIDEOS":"".join(videos),"TUTORIAL":tutorial}
+              "SIZE":perf_block.size_mb(release["bytes"]),"LIGHT":perf_block.standalone_section(ROOT/"perf/lightweight.json",release["version"],"#167e6d"),"SCREENSHOT":shot,"VIDEOS":"".join(videos),"TUTORIAL":tutorial}
 page=(ROOT/"site/index.html").read_text()
 for key,value in replacements.items(): page=page.replace("{{"+key+"}}",value)
 if "{{" in page: raise SystemExit("Unresolved website placeholders")

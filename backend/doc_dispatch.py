@@ -60,22 +60,53 @@ def warn(msg: str) -> None:
     print(f"{YELLOW}  ⚠ {msg}{RST}")
 
 
+def _soffice() -> str | None:
+    """已安装的 LibreOffice 命令行;DOCKIT_SOFFICE 可指定路径(设成不存在的路径 = 当作没装)。"""
+    soffice = os.environ.get("DOCKIT_SOFFICE") or shutil.which("soffice") \
+        or "/Applications/LibreOffice.app/Contents/MacOS/soffice"
+    return soffice if Path(soffice).exists() else None
+
+
+def _soffice_convert(p: Path, kind: str, label: str) -> str | None:
+    """用 LibreOffice 把老格式另存为 kind(docx/pptx),产出与源文件同目录。成功返回产出路径。"""
+    soffice = _soffice()
+    out = p.with_suffix("." + kind)
+    if soffice is None:
+        return None
+    cmd = [soffice, "--headless",
+           "-env:UserInstallation=file:///tmp/lo_profile_doc_dispatch",
+           "--convert-to", kind, "--outdir", str(p.parent), str(p)]
+    return str(out) if _run(cmd, label) == 0 and out.exists() else None
+
+
 def _doc_to_docx(f: str) -> str | None:
     """老 .doc → .docx。优先 soffice(产完整 docx 含 styles.xml,下游套模板等引擎都吃),
     没装 LibreOffice 才 textutil 兜底(极简 docx,缺 styles.xml,套模板线会挂)。
     成功返回产出路径,失败返回 None。"""
     p = Path(f)
     out = p.with_suffix(".docx")
-    soffice = shutil.which("soffice") or "/Applications/LibreOffice.app/Contents/MacOS/soffice"
-    if Path(soffice).exists():
-        cmd = [soffice, "--headless",
-               "-env:UserInstallation=file:///tmp/lo_profile_doc_dispatch",
-               "--convert-to", "docx", "--outdir", str(p.parent), str(p)]
-        if _run(cmd, "老 doc → docx(soffice)") == 0 and out.exists():
-            return str(out)
+    via_soffice = _soffice_convert(p, "docx", "老 doc → docx(soffice)")
+    if via_soffice:
+        return via_soffice
     if _run(["textutil", "-convert", "docx", str(p), "-output", str(out)], "老 doc → docx(textutil 兜底)"):
         return None
     return str(out) if out.exists() else None
+
+
+PPT_NEEDS_PPTX = ("老版 .ppt 不能直接转 Markdown:请先在 PowerPoint 或 Keynote 里另存为 .pptx 再转换"
+                  "(装了 LibreOffice 时 DocKit 会自动先转成 .pptx)")
+
+
+def _ppt_to_pptx(f: str) -> str | None:
+    """老 .ppt → .pptx。包内的 python-pptx 只读 .pptx,老二进制格式只能靠 LibreOffice 另存;
+    没装就如实失败并告诉用户怎么办(不能让 pptx 引擎「跳过」后显示成功)。"""
+    if _soffice() is None:
+        print(f"{RED}✖ {PPT_NEEDS_PPTX}{RST}")
+        return None
+    out = _soffice_convert(Path(f), "pptx", "老 ppt → pptx(soffice)")
+    if out is None:
+        print(f"{RED}✖ LibreOffice 没能把 {Path(f).name} 转成 .pptx;请在 PowerPoint 或 Keynote 里另存为 .pptx 再转换{RST}")
+    return out
 
 
 # ───────────────────────────────────────────── 路由表
@@ -132,7 +163,7 @@ def route_convert(f: str, target: str) -> tuple[list[str], str] | None:
     e = _ext(f)
     M = {
         ("pptx", "md"): (_py("pptx_to_md.py", f), "pptx → Markdown"),
-        ("ppt", "md"): (_py("pptx_to_md.py", f), "ppt → Markdown"),
+        ("ppt", "md"): (_py("pptx_to_md.py", f), "ppt → Markdown"),   # do_convert 先经 _ppt_to_pptx
         ("md", "word"): (_py("md_docx_template.py", f), "md → Word(套模板)"),
         ("docx", "word"): (_py("docx_apply_template.py", f), "docx → 套模板重排"),
         ("csv", "xlsx"): (_data("convert.py", "xlsx-from-csv", f), "csv → Excel"),
@@ -144,9 +175,10 @@ def route_convert(f: str, target: str) -> tuple[list[str], str] | None:
         ("xlsx", "txt"): (_data("convert.py", "xlsx-to-txt", f), "Excel → txt"),
     }
     # Use the packaged interpreter and the packaged converter; no runtime download.
+    # docx_to_md.py runs markitdown's own CLI with a small content sniffer standing in for magika.
     if e == "docx" and target == "md":
         out = str(Path(f).with_suffix(".md"))
-        return [PY, "-m", "markitdown", f, "-o", out], "docx → Markdown"
+        return _py("docx_to_md.py", f, "-o", out), "docx → Markdown"
     hit = M.get((e, target))
     return (hit[0], hit[1]) if hit else None
 
@@ -301,6 +333,15 @@ def do_convert(files, target):
             hit = route_convert(f, target)
             if hit:
                 rc |= _run(hit[0], hit[1] or f"→ {target}")
+            continue
+        # 老 .ppt:python-pptx 读不了,先另存为 .pptx 再走 pptx → md
+        if _ext(f) == "ppt" and target == "md":
+            print(f"{GREEN}● {Path(f).name}{RST}")
+            nf = _ppt_to_pptx(f)
+            if nf is None:
+                rc |= 1; continue
+            hit = route_convert(nf, target)
+            rc |= _run(hit[0], hit[1])
             continue
         hit = route_convert(f, target)
         if not hit:

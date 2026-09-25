@@ -6,6 +6,18 @@ Local document tools for Mac: standardize Chinese quotation marks, clean up punc
 
 **[Product website and installation guide](https://app-mac-doctools.tianli.cyou/)** · [Download the latest release](https://github.com/zengtianli/doc-tools/releases/latest) · [Report an issue](https://github.com/zengtianli/doc-tools/issues)
 
+<!-- lightweight:start -->
+## Lightweight (measured)
+
+| Download | Idle memory | Idle CPU | Cold launch to window shown |
+|---|---|---|---|
+| **77.1 MB** (installed 252 MB) | **46 MB** | **0.06%** | **981 ms** |
+
+SwiftUI interface; document work runs in the bundled Python 3.12 with pandas and other libraries, started as a subprocess only to read the operation list at launch and when you click Run, and it exits when done, so only the UI process remains while idle. The bundle carries a full Python runtime, so it is large.
+
+<sub>v1.1.0 · Mac16,12 / Apple M4 / macOS 27.2 · measured 2026-09-26. Memory is phys_footprint (the Memory column in Activity Monitor); CPU is CPU time ÷ wall time over 60 idle seconds; sizes in decimal MB. Raw data: [perf/lightweight.json](perf/lightweight.json).</sub>
+<!-- lightweight:end -->
+
 ## Installation
 
 Requires **macOS 15 or later and an Apple Silicon Mac**. Download `DocKit-v1.1.0-arm64.zip`, extract it, and drag `DocKit.app` into Applications. The public bundle ID remains `io.github.zengtianli.DocTools`; the source repository is still named doc-tools.
@@ -57,7 +69,9 @@ bash scripts/check-ui-state.sh
 
 Outputs: `build/DocKit.app`, `dist/DocKit-v1.1.0-arm64.zip`, and `dist/release-manifest.json`. Building does not automatically replace the locally installed version. The document engine and dependencies for supported formats are in `Contents/Resources`, with no runtime dependency on the author’s workspace.
 
-`verify-package.py` copies the entire app into a renamed directory and runs real document tasks with an empty HOME, a system-only PATH, and network access disabled. It checks outputs, original-file hashes, and the app signature. Tests use generated fictional documents and do not read personal files. `check-ui-state.sh` uses the production BackendClient and ViewModel to check option decoding, input isolation during execution, and prevention of reentrant execution.
+During packaging, `scripts/slim-runtime.py` leaves out what the runtime never uses (magika/onnxruntime, package test suites, Tk and more; a removed module that is still imported fails the build) and precompiles unchecked-hash `.pyc` files for the modules the operations import. Python never compares these `.pyc` files with their `.py` sources, so editing a `.py` inside a built `DocKit.app` does not trigger recompilation and the old bytecode keeps running; change the backend in the source tree and rebuild.
+
+`verify-package.py` copies the entire app into a renamed directory and runs real document tasks with an empty HOME, a system-only PATH, and network access disabled. It checks outputs, original-file hashes, and the app signature. Tests use generated fictional documents and do not read personal files. When LibreOffice is installed, the legacy .ppt case additionally allows only local sockets under /tmp; IP networking stays blocked. Each operation has a 90-second timeout by default; on a slower machine set `DOCKIT_VERIFY_TIMEOUT=<seconds>` to raise it. `check-ui-state.sh` uses the production BackendClient and ViewModel to check option decoding, input isolation during execution, and prevention of reentrant execution.
 
 ## Website and releases
 

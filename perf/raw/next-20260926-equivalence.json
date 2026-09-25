@@ -1,0 +1,827 @@
+{
+ "all_operations": {
+  "method": "同一组虚构输入，分别在发布版与瘦身版上跑 30 个 GUI 操作（含 verify-package 的 14 个及其余全部转换路线）；每个工作区内全部文件做哈希比较，docx/xlsx/pptx 忽略 docProps/core.xml 与 app.xml（含保存时间）",
+  "cases": [
+   {
+    "op": "quotes",
+    "args": [
+     "--opt",
+     "scope.headers=0"
+    ],
+    "inputs": [
+     "活动说明.docx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "clean",
+    "args": [],
+    "inputs": [
+     "活动说明.docx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "md"
+    ],
+    "inputs": [
+     "活动说明.docx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "word"
+    ],
+    "inputs": [
+     "读书会流程.md"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "xlsx"
+    ],
+    "inputs": [
+     "报名统计.csv"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "split",
+    "args": [],
+    "inputs": [
+     "读书会流程.md"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "split",
+    "args": [],
+    "inputs": [
+     "活动统计.xlsx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 3,
+    "outputs_identical": true
+   },
+   {
+    "op": "merge",
+    "args": [],
+    "inputs": [
+     "读书会流程.md",
+     "补充说明.md"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 3,
+    "outputs_identical": true
+   },
+   {
+    "op": "fontunify",
+    "args": [],
+    "inputs": [
+     "读书会介绍.pptx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "lowercase",
+    "args": [],
+    "inputs": [
+     "活动统计.xlsx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "stripchrome",
+    "args": [],
+    "inputs": [
+     "活动说明.docx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "view",
+    "args": [],
+    "inputs": [
+     "读书会流程.md"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 1,
+    "outputs_identical": true
+   },
+   {
+    "op": "clean",
+    "args": [],
+    "inputs": [
+     "读书会介绍.pptx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "md"
+    ],
+    "inputs": [
+     "读书会介绍.pptx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "clean",
+    "args": [
+     "--opt",
+     "rule.punct=0",
+     "--opt",
+     "scope.comments=0"
+    ],
+    "inputs": [
+     "活动说明.docx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "clean",
+    "args": [],
+    "inputs": [
+     "读书会流程.md"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "quotes",
+    "args": [],
+    "inputs": [
+     "读书会流程.md"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "lowercase",
+    "args": [],
+    "inputs": [
+     "活动说明.docx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "word"
+    ],
+    "inputs": [
+     "活动说明.docx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "csv"
+    ],
+    "inputs": [
+     "活动统计.xlsx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 3,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "txt"
+    ],
+    "inputs": [
+     "活动统计.xlsx"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 3,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "txt"
+    ],
+    "inputs": [
+     "报名统计.csv"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "xlsx"
+    ],
+    "inputs": [
+     "报名表.txt"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "csv"
+    ],
+    "inputs": [
+     "空格表.txt"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "xlsx"
+    ],
+    "inputs": [
+     "活动统计.xls"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "md"
+    ],
+    "inputs": [
+     "读书会介绍.ppt"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 0,
+     "total": 1
+    },
+    "output_files": 1,
+    "outputs_identical": false
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "md"
+    ],
+    "inputs": [
+     "旧版说明.doc"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 3,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "word"
+    ],
+    "inputs": [
+     "旧版说明.doc"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "convert",
+    "args": [
+     "--to",
+     "txt"
+    ],
+    "inputs": [
+     "旧版说明.doc"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 2,
+    "outputs_identical": true
+   },
+   {
+    "op": "merge",
+    "args": [],
+    "inputs": [
+     "报名表.txt",
+     "报名表2.txt"
+    ],
+    "release": {
+     "ok": true,
+     "succeeded": 0,
+     "total": 1
+    },
+    "next": {
+     "ok": true,
+     "succeeded": 1,
+     "total": 1
+    },
+    "output_files": 3,
+    "outputs_identical": false
+   }
+  ],
+  "differing_cases": 2,
+  "note": "差异 2 个均为本轮有意修正：老 .ppt → md 发布版报 1/1 成功但没有 .md（pptx 引擎跳过后退出码 0），现在如实报 0/1（此处沙箱禁止网络含本地 socket，LibreOffice 无法运行，报「LibreOffice 没能把…转成 .pptx」；verify-package 在放行 /tmp 本地 socket 时验证了真实转换）；合并两个 .txt 发布版报 0/1，现在产出 merged.csv（1/1）"
+ },
+ "docx_to_markdown_real_documents": {
+  "method": "本机 16 份真实 .docx（2–657 KB，内容不公开、不入库），发布版 `python -m markitdown` 与瘦身版 backend/docx_to_md.py 各转一次，Markdown 逐字节比较",
+  "files": 16,
+  "identical": 16,
+  "sizes_bytes": [
+   34081,
+   533468,
+   26343,
+   54754,
+   136545,
+   211656,
+   100113,
+   48376,
+   144567,
+   39001,
+   556457,
+   23832,
+   21012,
+   38639,
+   656881,
+   128810
+  ],
+  "remeasured": "修复轮重建后重跑，仍 16/16 逐字节相同"
+ },
+ "docx_to_markdown_process": {
+  "method": "/usr/bin/time -l 量单次 docx→md 子进程（活动说明.docx），各 2 次",
+  "release_python_m_markitdown": [
+   {
+    "real_s": 9.83,
+    "user_s": 4.48,
+    "peak_footprint_bytes": 134611712,
+    "max_rss_bytes": 163627008
+   },
+   {
+    "real_s": 9.15,
+    "user_s": 4.6,
+    "peak_footprint_bytes": 132006632,
+    "max_rss_bytes": 152469504
+   }
+  ],
+  "next_docx_to_md": [
+   {
+    "real_s": 2.65,
+    "user_s": 1.2,
+    "peak_footprint_bytes": 94454312,
+    "max_rss_bytes": 113655808
+   },
+   {
+    "real_s": 5.48,
+    "user_s": 1.5,
+    "peak_footprint_bytes": 94634536,
+    "max_rss_bytes": 109772800
+   }
+  ]
+ },
+ "import_trace_next": {
+  "method": "sitecustomize 在每个后端进程退出时记录 sys.modules；30 个操作全覆盖（修复轮重建后重跑）",
+  "modules_imported": 1378,
+  "removed_modules_imported": 0,
+  "magika": "只加载了 docx_to_md.py 注册的内容识别替身（无文件）",
+  "runtime_py_imported_without_shipped_pyc": 0
+ },
+ "mismatched_content_docx": {
+  "method": "20 个扩展名 .docx、内容各异的虚构文件（HTML、HTML 片段、纯文本、GBK 文本、CSV、JSON、Markdown、XML、RTF、pptx/xlsx/zip/老 xls/老 doc 改名、截断 docx、空文件、二进制等），发布版 python -m markitdown 与新版 backend/docx_to_md.py 各转一次，比较 Markdown（zip 输出里的文件路径已归一）",
+  "identical": 18,
+  "files": 20,
+  "cases": [
+   {
+    "input": "bin.docx",
+    "release": "失败",
+    "next": "失败",
+    "identical": true
+   },
+   {
+    "input": "csv.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   },
+   {
+    "input": "empty.docx",
+    "release": "失败",
+    "next": "失败",
+    "identical": true
+   },
+   {
+    "input": "frag.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   },
+   {
+    "input": "gbk.docx",
+    "release": "失败",
+    "next": "md",
+    "identical": false
+   },
+   {
+    "input": "html.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   },
+   {
+    "input": "html2.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   },
+   {
+    "input": "json.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   },
+   {
+    "input": "md.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   },
+   {
+    "input": "ok.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   },
+   {
+    "input": "ole.docx",
+    "release": "失败",
+    "next": "失败",
+    "identical": true
+   },
+   {
+    "input": "pkhead.docx",
+    "release": "md",
+    "next": "失败",
+    "identical": false
+   },
+   {
+    "input": "pptx.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   },
+   {
+    "input": "rtf.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   },
+   {
+    "input": "trunc.docx",
+    "release": "失败",
+    "next": "失败",
+    "identical": true
+   },
+   {
+    "input": "txt.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   },
+   {
+    "input": "xls.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   },
+   {
+    "input": "xlsx.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   },
+   {
+    "input": "xml.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   },
+   {
+    "input": "zip.docx",
+    "release": "md",
+    "next": "md",
+    "identical": true
+   }
+  ],
+  "differences": {
+   "gbk.docx": "GBK 编码的短文本：magika 判为随机字节、发布版失败；新版按文本转换成功",
+   "pkhead.docx": "只有 4 字节 zip 头：发布版当文本输出乱码；新版不猜（截断的 zip），失败"
+  }
+ }
+}

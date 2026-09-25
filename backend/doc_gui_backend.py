@@ -419,7 +419,8 @@ def _gui_run_copies(op_id: str, files: list[str], target: str | None, opts: dict
         full_log.append(log.strip())
         outs = _new_outputs(before, _snapshot(roots), {f})
         # In-place engines operate on this staged copy, so return that copy as well.
-        if rc == 0 and (not outs or op_id in ("fontunify",)):
+        # A conversion always writes a new file: exiting 0 without one is a failure, not an edit.
+        if rc == 0 and op_id != "convert" and (not outs or op_id in ("fontunify",)):
             outs = [f] + [p for p in outs if not p.endswith(".backup")]
         ok = rc == 0 and bool(outs)
         results.append({
@@ -427,11 +428,18 @@ def _gui_run_copies(op_id: str, files: list[str], target: str | None, opts: dict
             "name": Path(f).name,
             "ok": ok,
             "outputs": outs,
-            "message": ("→ " + ", ".join(Path(o).name for o in outs)) if outs
-                       else ("无对应引擎/未产出(可能此格式不支持该操作)" if rc == 0
-                             else "处理失败(详见日志)"),
+            "message": ("→ " + ", ".join(Path(o).name for o in outs)) if ok
+                       else _failure_message(log, rc),
         })
     return _wrap(op_id, results, missing, "\n".join(full_log))
+
+
+def _failure_message(log: str, rc: int) -> str:
+    """失败行的一句话:调度器用「✖ …」写给用户的原因(例如老 .ppt 该怎么办)优先,其次通用提示。"""
+    reasons = [line.strip()[1:].strip() for line in log.splitlines() if line.strip().startswith("✖")]
+    if reasons:
+        return reasons[-1]
+    return "无对应引擎/未产出(可能此格式不支持该操作)" if rc == 0 else "处理失败(详见日志)"
 
 
 def _wrap(op_id: str, results: list[dict], missing: list[str], log: str) -> dict:

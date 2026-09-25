@@ -81,6 +81,8 @@ def collect_pptx_files(input_paths: list, recursive: bool = False) -> list:
             # 如果是文件，直接检查扩展名
             if path_obj.suffix.lower() == ".pptx":
                 all_files.append(path_obj)
+            elif path_obj.suffix.lower() == ".ppt":
+                show_error(f"老版 .ppt 读不了: {path_obj.name}(请先在 PowerPoint 或 Keynote 里另存为 .pptx)")
             else:
                 show_warning(f"跳过非PPTX文件: {path_obj.name}")
         elif path_obj.is_dir():
@@ -112,8 +114,8 @@ def main():
     files_to_process = collect_pptx_files(args.input_paths, args.recursive)
 
     if not files_to_process:
-        show_warning("未找到任何PPTX文件")
-        sys.exit(0)
+        show_error("未找到任何PPTX文件")
+        sys.exit(1)  # 没转任何文件就不能报成功(DocKit 会把退出码 0 当作成功)
 
     total_success = 0
     progress = ProgressTracker()
@@ -128,6 +130,8 @@ def main():
 
     show_info("\n处理完成")
     show_success(f"总共成功转换了 {total_success} 个文件")
+    if total_success < len(files_to_process):
+        sys.exit(1)
 
 
 if __name__ == "__main__":

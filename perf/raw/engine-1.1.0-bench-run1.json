@@ -1,0 +1,90 @@
+{
+  "quotes 活动说明.docx": {
+    "median_ms": 1125,
+    "samples_ms": [
+      1955,
+      810,
+      1087,
+      1125,
+      1334
+    ],
+    "peak_mb": 20.0
+  },
+  "clean 活动说明.docx": {
+    "median_ms": 967,
+    "samples_ms": [
+      1205,
+      921,
+      1268,
+      732,
+      967
+    ],
+    "peak_mb": 20.1
+  },
+  "convert --to md 活动说明.docx": {
+    "median_ms": 8315,
+    "samples_ms": [
+      10124,
+      8645,
+      6199,
+      4993,
+      8315
+    ],
+    "peak_mb": 19.7
+  },
+  "convert --to xlsx 报名统计.csv": {
+    "median_ms": 1191,
+    "samples_ms": [
+      1976,
+      1191,
+      1158,
+      1152,
+      1230
+    ],
+    "peak_mb": 19.8
+  },
+  "convert --to txt 活动统计.xlsx": {
+    "median_ms": 3274,
+    "samples_ms": [
+      2657,
+      3389,
+      3274,
+      2378,
+      3594
+    ],
+    "peak_mb": 20.0
+  },
+  "convert --to md 读书会介绍.pptx": {
+    "median_ms": 2385,
+    "samples_ms": [
+      2656,
+      2398,
+      1711,
+      2267,
+      2385
+    ],
+    "peak_mb": 19.9
+  },
+  "split 活动统计.xlsx": {
+    "median_ms": 4111,
+    "samples_ms": [
+      4541,
+      4049,
+      4152,
+      4111,
+      3652
+    ],
+    "peak_mb": 20.1
+  },
+  "gui-ops": {
+    "median_ms": 344,
+    "samples_ms": [
+      439,
+      344,
+      260,
+      301,
+      345
+    ],
+    "peak_mb": 20.1
+  }
+}

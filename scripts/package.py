@@ -1,15 +1,25 @@
 #!/usr/bin/env python3
-"""Package, sign and manifest the compiled app. No installation."""
+"""Package, sign and manifest the compiled app. No installation.
+
+    package.py                 build/DocKit.app + dist/DocKit-v<version>-arm64.zip (release layout)
+    package.py --out DIR       app, archive and manifest all go to DIR (trial builds; dist/ untouched)
+"""
 from pathlib import Path
+import argparse
 import hashlib
 import json
 import plistlib
 import shutil
 import subprocess
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser()
+parser.add_argument("--out", type=Path, help="write app, archive and manifest here instead of build/ and dist/")
+out = parser.parse_args().out
+out = (ROOT / out).resolve() if out and not out.is_absolute() else out
 version = (ROOT / "VERSION").read_text().strip()
-app = ROOT / "build/DocKit.app"
+app = (out or ROOT / "build") / "DocKit.app"
 if app.exists(): shutil.rmtree(app)
 resources = app / "Contents/Resources"
 (app / "Contents/MacOS").mkdir(parents=True)
@@ -19,6 +29,8 @@ shutil.copy2(ROOT / "icon/AppIcon.icns", resources / "AppIcon.icns")
 shutil.copytree(ROOT / "backend", resources / "backend", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
 shutil.copytree(ROOT / "build/runtime/python", resources / "python", symlinks=True)
 for name in ("LICENSE", "THIRD-PARTY-NOTICES.md"): shutil.copy2(ROOT / name, resources / name)
+# Ship only what the operations run: see scripts/slim-runtime.py for every rule and its guard.
+subprocess.run([sys.executable, str(ROOT / "scripts/slim-runtime.py"), str(resources)], check=True)
 shutil.copytree(ROOT / "third-party", resources / "licenses")
 info = plistlib.loads((ROOT / "Info.plist").read_bytes())
 info.update(CFBundleName="DocKit", CFBundleDisplayName="DocKit", CFBundleShortVersionString=version,
@@ -32,8 +44,8 @@ for path in resources.rglob("*"):
     if magic in magics: subprocess.run(["codesign", "--force", "--sign", "-", str(path)], check=True, capture_output=True)
 subprocess.run(["codesign", "--force", "--sign", "-", str(app)], check=True)
 subprocess.run(["codesign", "--verify", "--deep", "--strict", str(app)], check=True)
-dist = ROOT / "dist"
-dist.mkdir(exist_ok=True)
+dist = out or ROOT / "dist"
+dist.mkdir(parents=True, exist_ok=True)
 archive = dist / f"DocKit-v{version}-arm64.zip"
 if archive.exists(): archive.unlink()
 subprocess.run(["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", str(app), str(archive)], check=True)
