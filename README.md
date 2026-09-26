@@ -7,7 +7,7 @@ Mac 上的本地文档工具：统一中文引号、整理标点与单位、转�
 **[产品主页与安装教程](https://app-mac-doctools.tianli.cyou/)** · [下载最新版](https://github.com/zengtianli/doc-tools/releases/latest) · [反馈问题](https://github.com/zengtianli/doc-tools/issues)
 
 <!-- lightweight:start -->
-## 轻量（本机实测）
+## 资源占用
 
 | 安装包 | 空闲内存 | 空闲 CPU | 冷启动到窗口出现 |
 |---|---|---|---|
@@ -15,7 +15,7 @@ Mac 上的本地文档工具：统一中文引号、整理标点与单位、转�
 
 SwiftUI 界面；文档处理靠包内 Python 3.12，只在启动读操作列表和点「执行」时起子进程、做完即退出，空闲只剩界面进程。运行时只带各项操作实际用到的部分：docx 转 Markdown 用约 140 行的内容识别代替 magika 与 onnxruntime 模型运行时，去掉各库测试目录和用不到的标准库，二进制去掉调试符号；各项操作用到的模块预编译成字节码，不再每次从源码编译。
 
-<sub>v1.1.1 · Mac16,12 / Apple M4 / macOS 27.2 · 2026-09-26 本机实测。内存口径为 phys_footprint；CPU 为 60 秒采样窗内 CPU 时间 ÷ 墙钟；大小按十进制 MB。原始数据见 [perf/lightweight.json](perf/lightweight.json)。</sub>
+<sub>v1.1.1 · Mac16,12 / Apple M4 / macOS 27.2 · 2026-09-26。数字来自所列设备实测，版本更新后重新测量。内存口径为 phys_footprint；CPU 为 60 秒采样窗内 CPU 时间 ÷ 墙钟；大小按十进制 MB。原始数据见 [perf/lightweight.json](perf/lightweight.json)。</sub>
 <!-- lightweight:end -->
 
 ## 安装
