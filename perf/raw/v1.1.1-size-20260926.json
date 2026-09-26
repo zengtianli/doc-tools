@@ -1,0 +1,11 @@
+{
+ "archive": "dist/DocKit-v1.1.1-arm64.zip",
+ "app": "<解压副本>/DocKit.app",
+ "download_bytes": 44666732,
+ "download_mb": 42.6,
+ "installed_bytes": 132370432,
+ "installed_mb": 126.24,
+ "files": 4634,
+ "archive_sha256": "05aae4b16ae78f6ed9087c2c8a51846d7deed9e9d3f353aece51fca573a28ceb",
+ "measured_at": "2026-09-26"
+}

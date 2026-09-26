@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.1.1",
   "network": "denied by sandbox-exec",
   "ambient_home": "empty",
   "path": "/usr/bin:/bin",
@@ -15,7 +15,7 @@
       "inputs": [
         "活动说明.docx"
       ],
-      "seconds": 0.243
+      "seconds": 0.508
     },
     {
       "operation": "clean",
@@ -23,7 +23,7 @@
       "inputs": [
         "活动说明.docx"
       ],
-      "seconds": 0.219
+      "seconds": 0.349
     },
     {
       "operation": "convert",
@@ -34,7 +34,7 @@
       "inputs": [
         "活动说明.docx"
       ],
-      "seconds": 0.911
+      "seconds": 3.288
     },
     {
       "operation": "convert",
@@ -45,7 +45,7 @@
       "inputs": [
         "读书会流程.md"
       ],
-      "seconds": 0.371
+      "seconds": 0.892
     },
     {
       "operation": "convert",
@@ -56,7 +56,7 @@
       "inputs": [
         "报名统计.csv"
       ],
-      "seconds": 0.247
+      "seconds": 0.704
     },
     {
       "operation": "split",
@@ -64,7 +64,7 @@
       "inputs": [
         "读书会流程.md"
       ],
-      "seconds": 0.134
+      "seconds": 0.313
     },
     {
       "operation": "split",
@@ -72,7 +72,7 @@
       "inputs": [
         "活动统计.xlsx"
       ],
-      "seconds": 0.501
+      "seconds": 1.656
     },
     {
       "operation": "merge",
@@ -81,7 +81,7 @@
         "读书会流程.md",
         "补充说明.md"
       ],
-      "seconds": 0.146
+      "seconds": 0.356
     },
     {
       "operation": "fontunify",
@@ -89,7 +89,7 @@
       "inputs": [
         "读书会介绍.pptx"
       ],
-      "seconds": 0.307
+      "seconds": 0.765
     },
     {
       "operation": "lowercase",
@@ -97,7 +97,7 @@
       "inputs": [
         "活动统计.xlsx"
       ],
-      "seconds": 0.308
+      "seconds": 0.604
     },
     {
       "operation": "stripchrome",
@@ -105,7 +105,7 @@
       "inputs": [
         "活动说明.docx"
       ],
-      "seconds": 0.277
+      "seconds": 0.444
     },
     {
       "operation": "view",
@@ -113,7 +113,7 @@
       "inputs": [
         "读书会流程.md"
       ],
-      "seconds": 0.185
+      "seconds": 0.245
     },
     {
       "operation": "clean",
@@ -121,7 +121,7 @@
       "inputs": [
         "读书会介绍.pptx"
       ],
-      "seconds": 0.424
+      "seconds": 0.605
     },
     {
       "operation": "convert",
@@ -132,7 +132,7 @@
       "inputs": [
         "读书会介绍.pptx"
       ],
-      "seconds": 0.577
+      "seconds": 0.438
     },
     {
       "operation": "clean",
@@ -140,7 +140,7 @@
       "inputs": [
         "读书会流程.md"
       ],
-      "seconds": 0.43
+      "seconds": 0.3
     },
     {
       "operation": "quotes",
@@ -148,7 +148,7 @@
       "inputs": [
         "读书会流程.md"
       ],
-      "seconds": 0.356
+      "seconds": 0.268
     },
     {
       "operation": "lowercase",
@@ -156,7 +156,7 @@
       "inputs": [
         "活动说明.docx"
       ],
-      "seconds": 0.323
+      "seconds": 0.349
     },
     {
       "operation": "convert",
@@ -167,7 +167,7 @@
       "inputs": [
         "活动说明.docx"
       ],
-      "seconds": 0.676
+      "seconds": 0.807
     },
     {
       "operation": "convert",
@@ -178,7 +178,7 @@
       "inputs": [
         "活动统计.xlsx"
       ],
-      "seconds": 0.413
+      "seconds": 0.662
     },
     {
       "operation": "convert",
@@ -189,7 +189,7 @@
       "inputs": [
         "活动统计.xlsx"
       ],
-      "seconds": 0.845
+      "seconds": 1.376
     },
     {
       "operation": "convert",
@@ -200,7 +200,7 @@
       "inputs": [
         "报名统计.csv"
       ],
-      "seconds": 0.189
+      "seconds": 0.262
     },
     {
       "operation": "convert",
@@ -211,7 +211,7 @@
       "inputs": [
         "报名表.txt"
       ],
-      "seconds": 0.909
+      "seconds": 1.215
     },
     {
       "operation": "convert",
@@ -222,7 +222,7 @@
       "inputs": [
         "空格表.txt"
       ],
-      "seconds": 0.191
+      "seconds": 0.246
     },
     {
       "operation": "convert",
@@ -233,7 +233,7 @@
       "inputs": [
         "旧版说明.doc"
       ],
-      "seconds": 1.448
+      "seconds": 3.364
     },
     {
       "operation": "convert",
@@ -244,7 +244,7 @@
       "inputs": [
         "旧版说明.doc"
       ],
-      "seconds": 0.729
+      "seconds": 1.017
     },
     {
       "operation": "convert",
@@ -255,7 +255,7 @@
       "inputs": [
         "旧版说明.doc"
       ],
-      "seconds": 0.141
+      "seconds": 0.206
     },
     {
       "operation": "convert",
@@ -266,7 +266,7 @@
       "inputs": [
         "网页导出.docx"
       ],
-      "seconds": 1.037
+      "seconds": 1.504
     },
     {
       "operation": "convert",
@@ -277,7 +277,7 @@
       "inputs": [
         "纯文本.docx"
       ],
-      "seconds": 1.079
+      "seconds": 1.761
     },
     {
       "operation": "merge",
@@ -286,7 +286,7 @@
         "报名表.txt",
         "报名表2.txt"
       ],
-      "seconds": 0.198
+      "seconds": 0.337
     },
     {
       "operation": "convert",
@@ -297,7 +297,7 @@
       "inputs": [
         "活动统计.xls"
       ],
-      "seconds": 0.413
+      "seconds": 0.768
     },
     {
       "operation": "convert",
@@ -308,7 +308,7 @@
       "inputs": [
         "读书会介绍.ppt"
       ],
-      "seconds": 2.238,
+      "seconds": 3.901,
       "sandbox": "IP denied; <tmp> unix sockets allowed for LibreOffice"
     }
   ],

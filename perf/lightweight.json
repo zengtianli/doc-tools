@@ -1,59 +1,471 @@
 {
   "product": "DocKit",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "measured_at": "2026-09-26",
   "device": "Mac16,12 / Apple M4 / macOS 27.2",
   "size": {
-    "download_mb": 73.55,
-    "installed_mb": 240.13,
-    "download_bytes": 77124311,
-    "installed_bytes": 251797504,
-    "method": "measure.py size；*_bytes 为字节，*_mb 为 MiB；页面按十进制 MB 显示"
+    "download_mb": 42.6,
+    "installed_mb": 126.24,
+    "download_bytes": 44666732,
+    "installed_bytes": 132370432,
+    "files": 4634,
+    "method": "measure.py size；dist/DocKit-v1.1.1-arm64.zip 与其解压出的 DocKit.app；*_bytes 为字节，*_mb 为 MiB；页面按十进制 MB 显示",
+    "archive_sha256": "05aae4b16ae78f6ed9087c2c8a51846d7deed9e9d3f353aece51fca573a28ceb"
   },
   "compare": [],
   "idle": {
-    "process": "DocKit.app/Contents/MacOS/DocTools（v1.1.0 发布包解压副本）",
-    "footprint_mb": 46.0,
-    "cpu_pct": 0.06,
+    "process": "DocKit.app/Contents/MacOS/DocTools（v1.1.1 发布包解压副本）",
+    "footprint_mb": 43.0,
+    "cpu_pct": 0.07,
     "window_s": 60,
     "rest_s": 45,
     "runs": [
       {
-        "footprint_mb": 46.0,
-        "cpu_pct": 0.08,
-        "measured_at": "2026-09-25T23:22:10",
-        "loadavg_before": "{ 101.30 71.70 63.94 }"
+        "footprint_mb": 43.0,
+        "cpu_pct": 0.03,
+        "measured_at": "2026-09-26T09:53:05",
+        "loadavg_before": "{ 129.80 111.92 85.65 }"
       },
       {
-        "footprint_mb": 46.0,
-        "cpu_pct": 0.03,
-        "measured_at": "2026-09-25T23:24:00",
-        "loadavg_before": "{ 220.43 119.43 83.30 }"
+        "footprint_mb": 43.0,
+        "cpu_pct": 0.1,
+        "measured_at": "2026-09-26T09:54:13",
+        "loadavg_before": "{ 82.50 101.40 83.62 }"
       }
     ],
-    "method": "open -n -g -j 后台隐藏启动，静置 45 秒后用 measure.py idle 采样 60 秒（phys_footprint 峰值，活动监视器「内存」列同口径）；CPU = 进程 CPU 时间增量 ÷ 墙钟；2 次，内存取峰值、CPU 取平均"
+    "scope": "主进程 + XPC 辅助进程 + 子进程合计（空闲时只有界面进程，Python 子进程已退出）",
+    "method": "open -n -g -j 后台隐藏启动，静置 45 秒后用 measure.py idle --with-helpers 采样 60 秒（CPU = 窗口内 CPU 时间增量 ÷ 墙钟；内存 = 窗口后 3 次 phys_footprint 合计的峰值，活动监视器「内存」列同口径）；2 次，内存取峰值、CPU 取平均"
   },
   "speed_gui": [
     {
       "key": "cold_launch_to_window",
       "label": "冷启动到窗口出现",
-      "median_ms": 981,
+      "label_en": "Cold launch to window shown",
+      "median_ms": 957,
       "runs": 5,
       "headline": true,
       "raw_ms": [
-        2789,
-        1718,
-        981,
-        592,
-        472
+        1170,
+        897,
+        861,
+        957,
+        1495
       ],
-      "method": "open -g -j 后台隐藏启动，被动读取窗口列表直到主窗口出现；不点击、不激活；5 次取中位",
-      "load": "负载均值 36.39 25.92 31.08；total = 20480.00M  used = 18955.38M  free = 1524.62M",
-      "label_en": "Cold launch to window shown"
+      "method": "launchtime：open -n -g -j 后台隐藏启动，被动读取窗口列表直到主窗口出现；不点击、不激活；5 次取中位",
+      "load": "负载均值 64.38 92.88 82.26；total = 18432.00M  used = 17852.88M  free = 579.12M",
+      "same_window_compare": {
+        "note": "随后同一时段（负载均值约 52–60）交替各测 5 次",
+        "v1.1.0_release": {
+          "median_ms": 1284,
+          "raw_ms": [
+            3154,
+            1164,
+            1284,
+            1377,
+            922
+          ]
+        },
+        "v1.1.1_release": {
+          "median_ms": 1027,
+          "raw_ms": [
+            808,
+            846,
+            1231,
+            1401,
+            1027
+          ]
+        }
+      }
     }
   ],
-  "env_note": "2026-09-26 主会话逐个顺序测量，负载均值 14.75 21.42 29.70；total = 19456.00M  used = 18497.31M  free = 958.69M（开始时）；启动时间受负载影响，内存与 CPU 为进程自身数值",
+  "speed_ops": [
+    {
+      "key": "gui-ops",
+      "label": "启动时读取操作列表",
+      "median_ms": 285,
+      "runs": 3
+    },
+    {
+      "key": "clean docx",
+      "label": "docx 规范化",
+      "median_ms": 813,
+      "runs": 3
+    },
+    {
+      "key": "docx→md",
+      "label": "docx → Markdown",
+      "median_ms": 4135,
+      "runs": 3
+    },
+    {
+      "key": "xlsx→txt",
+      "label": "Excel → txt（pandas）",
+      "median_ms": 1952,
+      "runs": 3
+    },
+    {
+      "key": "pptx→md",
+      "label": "pptx → Markdown",
+      "median_ms": 689,
+      "runs": 3
+    },
+    {
+      "key": "md→word",
+      "label": "Markdown → Word",
+      "median_ms": 1187,
+      "runs": 3
+    }
+  ],
+  "speed_ops_method": "直接调用应用内 python3.12 -s -B backend/doc_gui_backend.py（与 App 相同参数与环境），三个版本按操作交替各 3 轮取中位数，虚构演示文档；原始数据 perf/raw/next-20260926-op-latency.json；测于与 1.1.1 同源的 build/perf-next（与发布包只差 DocTools 可执行文件 strip -x 与版本号），负载均值约 240–300，绝对秒数偏大，只作前后对比",
+  "speed_ops_before": {
+    "version": "1.1.0 发布包",
+    "speed_ops": [
+      {
+        "key": "gui-ops",
+        "label": "启动时读取操作列表",
+        "median_ms": 617,
+        "runs": 3
+      },
+      {
+        "key": "clean docx",
+        "label": "docx 规范化",
+        "median_ms": 3146,
+        "runs": 3
+      },
+      {
+        "key": "docx→md",
+        "label": "docx → Markdown",
+        "median_ms": 9872,
+        "runs": 3
+      },
+      {
+        "key": "xlsx→txt",
+        "label": "Excel → txt（pandas）",
+        "median_ms": 4576,
+        "runs": 3
+      },
+      {
+        "key": "pptx→md",
+        "label": "pptx → Markdown",
+        "median_ms": 2100,
+        "runs": 3
+      },
+      {
+        "key": "md→word",
+        "label": "Markdown → Word",
+        "median_ms": 3136,
+        "runs": 3
+      }
+    ]
+  },
+  "task_memory": {
+    "key": "docx→md 子进程",
+    "peak_footprint_mb": 90.3,
+    "cpu_user_s": [
+      1.2,
+      1.5
+    ],
+    "method": "/usr/bin/time -l，活动说明.docx，2 次",
+    "before_v1_1_0": {
+      "key": "docx→md 子进程（python -m markitdown）",
+      "peak_footprint_mb": 128.4,
+      "cpu_user_s": [
+        4.48,
+        4.6
+      ]
+    }
+  },
+  "before": {
+    "version": "1.1.0",
+    "download_bytes": 77124311,
+    "installed_bytes": 251797504,
+    "files": 6833,
+    "idle_footprint_mb": 46.0,
+    "idle_cpu_pct": 0.06,
+    "cold_launch_median_ms_same_window": 1284
+  },
+  "verification": {
+    "verify_package": "scripts/verify-package.py --app <v1.1.1 发布包解压副本>：31 个用例全部通过（断网 sandbox-exec、空 HOME、仅系统 PATH、改名目录、原件不变、部分成功与非法选项被拒、没装 LibreOffice 时老 .ppt 明确失败）；codesign --verify --deep --strict 在校验前后均通过，包内 .pyc 仍为 1169 个。publish.py 同时在 build/DocKit.app 上通过 verify-package 与 check-ui-state",
+    "raw": [
+      "perf/raw/v1.1.1-size-20260926.json",
+      "perf/raw/v1.1.1-idle-45s-20260926.jsonl",
+      "perf/raw/v1.1.1-launch-20260926.json",
+      "perf/raw/v1.1.1-package-verification.json"
+    ]
+  },
+  "env_note": "2026-09-26 09:52–09:58 测量；负载均值约 50–130（其他会话的编译与索引），交换区已用约 17.9 GB / 18.4 GB；内存与 CPU 为进程自身数值，启动时间受负载影响",
+  "why": "SwiftUI 界面；文档处理靠包内 Python 3.12，只在启动读操作列表和点「执行」时起子进程、做完即退出，空闲只剩界面进程。运行时只带各项操作实际用到的部分：docx 转 Markdown 用约 140 行的内容识别代替 magika 与 onnxruntime 模型运行时，去掉各库测试目录和用不到的标准库，二进制去掉调试符号；各项操作用到的模块预编译成字节码，不再每次从源码编译。",
+  "why_en": "SwiftUI interface; document work runs in the bundled Python 3.12, started as a subprocess only to read the operation list at launch and when you click Run, and it exits when done, so only the UI process remains while idle. The runtime ships only what the operations use: a ~140-line content sniffer replaces magika and the onnxruntime model runtime for docx to Markdown, library test folders and unused standard-library parts are removed, binaries are stripped, and the modules the operations import are precompiled so nothing is recompiled from source on each run.",
   "history": [
+    {
+      "section": "next",
+      "released_as": "1.1.1",
+      "replaced_on": "2026-09-26",
+      "reason": "源码实测段已随 v1.1.1 发布，顶层改为发布包实测；本段保留改动清单、等价性核验与同源构建测量",
+      "value": {
+        "source": "0f8de548（stash create 基线 = HEAD dca100f + 其他会话未提交的网站改动）+ 本轮未提交改动",
+        "measured_at": "2026-09-26",
+        "device": "Mac16,12 / Apple M4 / macOS 27.2",
+        "load_note": "测量时本机负载均值约 100–450（其他会话的编译与索引），交换区已用约 16–19 GB（总量约 17–20 GB）；内存与 CPU 为进程自身数值，可比；操作耗时的绝对秒数偏大，改前改后在同一窗口交替测量",
+        "build": "DOCKIT_OUT=build/perf-next ./build.sh（打包时自动运行 scripts/slim-runtime.py）",
+        "size": {
+          "download_bytes": 44766484,
+          "download_mb": 42.69,
+          "installed_bytes": 133103616,
+          "installed_mb": 126.94,
+          "files": 4637,
+          "method": "measure.py size；build/perf-next/DocKit-v1.1.0-arm64.zip 与 build/perf-next/DocKit.app",
+          "bytecode_cost": {
+            "installed_bytes": 24076288,
+            "download_bytes": 9114336,
+            "note": "预编译字节码占的部分；不带字节码时安装后 109.1 MB、下载 35.7 MB，但每次操作都要重新编译，耗时是现在的 2.2–3.6 倍"
+          },
+          "removed_bytes_by_rule": {
+            "dists": 84424477,
+            "devfiles": 3627319,
+            "tests": 19871691,
+            "stdlib": 14784694,
+            "lxml": 5245392,
+            "strip": 6704000
+          },
+          "remeasured": "2026-09-26 修复轮重建后（build/perf-next，zip sha256 b07eaed5…）",
+          "note": "2026-09-26 03:00 主会话用 python3 -B scripts/package.py --out build/perf-next 干净重打并复核（verify-package 通过，签名在复核前后均有效）；此前的 133,160,960 B 含测试运行时写入包内的 3 个 .pyc"
+        },
+        "idle": {
+          "process": "DocKit.app/Contents/MacOS/DocTools（build/perf-next）",
+          "footprint_mb": 46.0,
+          "cpu_pct": 0.0,
+          "window_s": 60,
+          "rest_s": 45,
+          "runs": [
+            {
+              "footprint_mb": 44.0,
+              "cpu_pct": 0.0,
+              "measured_at": "2026-09-26T00:13:43",
+              "loadavg_before": "{ 200.05 158.75 226.42 }"
+            },
+            {
+              "footprint_mb": 46.0,
+              "cpu_pct": 0.0,
+              "measured_at": "2026-09-26T00:15:32",
+              "loadavg_before": "{ 228.93 183.08 227.86 }"
+            }
+          ],
+          "method": "open -n -g -j 后台隐藏启动，静置 45 秒后用 measure.py idle 采样 60 秒（phys_footprint 峰值，活动监视器「内存」列同口径）；CPU = 进程 CPU 时间增量 ÷ 墙钟；2 次，内存取峰值、CPU 取平均"
+        },
+        "speed_ops": [
+          {
+            "key": "gui-ops",
+            "label": "启动时读取操作列表",
+            "median_ms": 285,
+            "runs": 3
+          },
+          {
+            "key": "clean docx",
+            "label": "docx 规范化",
+            "median_ms": 813,
+            "runs": 3
+          },
+          {
+            "key": "docx→md",
+            "label": "docx → Markdown",
+            "median_ms": 4135,
+            "runs": 3
+          },
+          {
+            "key": "xlsx→txt",
+            "label": "Excel → txt（pandas）",
+            "median_ms": 1952,
+            "runs": 3
+          },
+          {
+            "key": "pptx→md",
+            "label": "pptx → Markdown",
+            "median_ms": 689,
+            "runs": 3
+          },
+          {
+            "key": "md→word",
+            "label": "Markdown → Word",
+            "median_ms": 1187,
+            "runs": 3
+          }
+        ],
+        "speed_ops_method": "直接调用应用内 python3.12 -s -B backend/doc_gui_backend.py（与 App 相同参数与环境），三个版本按操作交替各 3 轮取中位数，虚构演示文档；原始数据 perf/raw/next-20260926-op-latency.json",
+        "task_memory": {
+          "key": "docx→md 子进程",
+          "peak_footprint_mb": 90.3,
+          "cpu_user_s": [
+            1.2,
+            1.5
+          ],
+          "method": "/usr/bin/time -l，活动说明.docx，2 次"
+        },
+        "changes": [
+          "docx→Markdown 改由 backend/docx_to_md.py 调用 markitdown 自带命令行，并用约 140 行的内容识别替身顶替 magika：真 docx 与扩展名一致；扩展名是 .docx、内容其实是 HTML/纯文本/CSV/XML/pptx/xlsx/zip/老 xls 的文件按内容选 markitdown 的转换器，与带 magika 的 v1.1.0 输出相同（例如 <h1>标题</h1><p>段落</p> → \"# 标题\n\n段落\"）；16 份真实文档逐字节相同",
+          "打包时不再带 magika、onnxruntime 及只被它们依赖的 flatbuffers、protobuf、packaging、click、python-dotenv（约 84 MB）",
+          "去掉 pandas、numpy 等包自带的测试目录（约 20 MB）和类型存根、Cython 源、C 头文件（约 3.6 MB）",
+          "去掉标准库里用不到的 Tk 图形界面（含 Tcl/Tk 库）、IDLE、turtle、ensurepip（含 pip 安装包）、lib2to3、pydoc 帮助数据、头文件与手册（约 15 MB）；带版本号的 Tcl/Tk 路径改为通配，每条规则至少要匹配到一个路径，否则构建报错",
+          "去掉没有任何模块导入的 lxml.objectify 扩展（约 5 MB）",
+          "所有 .so/.dylib 与解释器执行 strip -x 去掉本地调试符号（约 6.7 MB），打包脚本随后逐个重新签名",
+          "为各项操作实际导入的 1169 个模块预编译 .pyc（unchecked-hash，约 21 MB）：App 以 -B 运行 Python，原来每次操作都从源码重新编译 pandas、python-docx 等；包内 .py 被改后不会自动重新编译，README 已写明",
+          "以上全部写进 scripts/slim-runtime.py，由 scripts/package.py 在签名前自动执行；守卫用包内 python3.12 的语法解析器读取所有随包发出的 .py（运行时、各包与 backend）的 import 语句和字面量 import_module 调用（跳过 TYPE_CHECKING 块），命中被删模块即构建失败，已知安全的 4 处写明原因",
+          "修原有问题：老 .ppt 转 Markdown 以前被 pptx 引擎「跳过」后仍显示成功；现在装了 LibreOffice 时先另存为 .pptx 再转，没装就如实失败并提示先另存为 .pptx；格式转换没有产出新文件一律算失败，失败行显示调度器给出的原因",
+          "修原有问题：合并多个 .txt（按列合并成 merged.csv）以前把文件当目录传给引擎而失败；引擎现在接受文件列表并在失败时返回非零退出码",
+          "scripts/verify-package.py 支持 --app 指定包，覆盖其余转换路线、扩展名与内容不符的 .docx、合并 txt、老 .ppt（有 LibreOffice 时断言产出 Markdown，没装时断言明确失败信息），可用 --record-modules 重新生成字节码清单；单项超时默认 90 秒，可用 DOCKIT_VERIFY_TIMEOUT 调高"
+        ],
+        "verification": {
+          "verify_package": "build/perf-next 上 31 个用例全部通过，另验证没装 LibreOffice 时老 .ppt 明确失败、部分成功与非法选项被拒（断网、空 HOME、仅系统 PATH、改名目录、原件哈希不变、签名校验；有 LibreOffice 的 .ppt 用例只额外放行 /tmp 下的本地 socket）",
+          "equivalence": "30 个操作与发布版逐一比较：28 个产出逐一相同，2 个是本轮有意修正（老 .ppt 不再假成功、合并 txt 产出 merged.csv）；16 份真实 docx→md 逐字节相同 16/16；20 个扩展名 .docx 而内容不符的文件 18 个与发布版相同，另 2 个见 equivalence.json",
+          "slim_guard": "正反例：backend 里加 from packaging.version import Version / import dotenv、函数内 import tkinter、相对导入被删测试包、import_module(\"magika\") 均使构建失败；TYPE_CHECKING 块内的导入放行；Tcl/Tk 目录改成新版本号仍被通配删除，缺一条规则匹配时在删除任何文件之前报错",
+          "raw": [
+            "perf/raw/next-20260926-equivalence.json",
+            "perf/raw/next-20260926-package-verification.json",
+            "perf/raw/next-20260926-size.json",
+            "perf/raw/next-20260926-idle.jsonl"
+          ]
+        },
+        "before_same_method": {
+          "version": "1.1.0 发布包（dist/DocKit-v1.1.0-arm64.zip 解压副本）",
+          "size": {
+            "download_bytes": 77124311,
+            "installed_bytes": 251797504,
+            "files": 6833
+          },
+          "idle": {
+            "process": "DocKit.app/Contents/MacOS/DocTools（v1.1.0 发布包解压副本）",
+            "footprint_mb": 46.0,
+            "cpu_pct": 0.06,
+            "window_s": 60,
+            "rest_s": 45,
+            "runs": [
+              {
+                "footprint_mb": 46.0,
+                "cpu_pct": 0.08,
+                "measured_at": "2026-09-25T23:22:10",
+                "loadavg_before": "{ 101.30 71.70 63.94 }"
+              },
+              {
+                "footprint_mb": 46.0,
+                "cpu_pct": 0.03,
+                "measured_at": "2026-09-25T23:24:00",
+                "loadavg_before": "{ 220.43 119.43 83.30 }"
+              }
+            ],
+            "method": "open -n -g -j 后台隐藏启动，静置 45 秒后用 measure.py idle 采样 60 秒（phys_footprint 峰值，活动监视器「内存」列同口径）；CPU = 进程 CPU 时间增量 ÷ 墙钟；2 次，内存取峰值、CPU 取平均"
+          },
+          "speed_ops": [
+            {
+              "key": "gui-ops",
+              "label": "启动时读取操作列表",
+              "median_ms": 617,
+              "runs": 3
+            },
+            {
+              "key": "clean docx",
+              "label": "docx 规范化",
+              "median_ms": 3146,
+              "runs": 3
+            },
+            {
+              "key": "docx→md",
+              "label": "docx → Markdown",
+              "median_ms": 9872,
+              "runs": 3
+            },
+            {
+              "key": "xlsx→txt",
+              "label": "Excel → txt（pandas）",
+              "median_ms": 4576,
+              "runs": 3
+            },
+            {
+              "key": "pptx→md",
+              "label": "pptx → Markdown",
+              "median_ms": 2100,
+              "runs": 3
+            },
+            {
+              "key": "md→word",
+              "label": "Markdown → Word",
+              "median_ms": 3136,
+              "runs": 3
+            }
+          ],
+          "task_memory": {
+            "key": "docx→md 子进程（python -m markitdown）",
+            "peak_footprint_mb": 128.4,
+            "cpu_user_s": [
+              4.48,
+              4.6
+            ]
+          }
+        },
+        "measure_note": "size 与 verification 为修复轮重建后重测；idle、speed_ops、task_memory 沿用修复前同轮构建的测量（修复只改了扩展名与内容不符的 .docx 识别、.ppt/合并 txt 路径和构建守卫，不在空闲与这些操作的路径上）",
+        "verification_main_session": "verify-package（断网、空 HOME、搬迁路径）在干净重打的 build/perf-next/DocKit.app 上通过；codesign --verify --deep --strict 在复核前后均通过"
+      }
+    },
+    {
+      "section": "top-level",
+      "replaced_on": "2026-09-26",
+      "reason": "v1.1.1 轻量化版本发布，改用 1.1.1 发布包实测；原顶层为 1.1.0 发布包实测",
+      "value": {
+        "version": "1.1.0",
+        "measured_at": "2026-09-26",
+        "device": "Mac16,12 / Apple M4 / macOS 27.2",
+        "size": {
+          "download_mb": 73.55,
+          "installed_mb": 240.13,
+          "download_bytes": 77124311,
+          "installed_bytes": 251797504,
+          "method": "measure.py size；*_bytes 为字节，*_mb 为 MiB；页面按十进制 MB 显示"
+        },
+        "idle": {
+          "process": "DocKit.app/Contents/MacOS/DocTools（v1.1.0 发布包解压副本）",
+          "footprint_mb": 46.0,
+          "cpu_pct": 0.06,
+          "window_s": 60,
+          "rest_s": 45,
+          "runs": [
+            {
+              "footprint_mb": 46.0,
+              "cpu_pct": 0.08,
+              "measured_at": "2026-09-25T23:22:10",
+              "loadavg_before": "{ 101.30 71.70 63.94 }"
+            },
+            {
+              "footprint_mb": 46.0,
+              "cpu_pct": 0.03,
+              "measured_at": "2026-09-25T23:24:00",
+              "loadavg_before": "{ 220.43 119.43 83.30 }"
+            }
+          ],
+          "method": "open -n -g -j 后台隐藏启动，静置 45 秒后用 measure.py idle 采样 60 秒（phys_footprint 峰值，活动监视器「内存」列同口径）；CPU = 进程 CPU 时间增量 ÷ 墙钟；2 次，内存取峰值、CPU 取平均"
+        },
+        "speed_gui": [
+          {
+            "key": "cold_launch_to_window",
+            "label": "冷启动到窗口出现",
+            "median_ms": 981,
+            "runs": 5,
+            "headline": true,
+            "raw_ms": [
+              2789,
+              1718,
+              981,
+              592,
+              472
+            ],
+            "method": "open -g -j 后台隐藏启动，被动读取窗口列表直到主窗口出现；不点击、不激活；5 次取中位",
+            "load": "负载均值 36.39 25.92 31.08；total = 20480.00M  used = 18955.38M  free = 1524.62M",
+            "label_en": "Cold launch to window shown"
+          }
+        ],
+        "env_note": "2026-09-26 主会话逐个顺序测量，负载均值 14.75 21.42 29.70；total = 19456.00M  used = 18497.31M  free = 958.69M（开始时）；启动时间受负载影响，内存与 CPU 为进程自身数值",
+        "why": "SwiftUI 界面；文档处理靠包内 Python 3.12 与 pandas 等库，只在启动读操作列表和点「执行」时起子进程、做完即退出，空闲只剩界面进程；包内含完整 Python，体积较大。",
+        "why_en": "SwiftUI interface; document work runs in the bundled Python 3.12 with pandas and other libraries, started as a subprocess only to read the operation list at launch and when you click Run, and it exits when done, so only the UI process remains while idle. The bundle carries a full Python runtime, so it is large."
+      }
+    },
     {
       "idle": {
         "process": "DocKit.app/Contents/MacOS/DocTools（build/perf-run，v1.1.0 发布版）",
@@ -83,209 +495,5 @@
         "method": "open -g -j 后台隐藏启动，被动读取窗口列表直到主窗口出现；不点击、不激活"
       }
     }
-  ],
-  "next": {
-    "source": "0f8de548（stash create 基线 = HEAD dca100f + 其他会话未提交的网站改动）+ 本轮未提交改动",
-    "measured_at": "2026-09-26",
-    "device": "Mac16,12 / Apple M4 / macOS 27.2",
-    "load_note": "测量时本机负载均值约 100–450（其他会话的编译与索引），交换区已用约 16–19 GB（总量约 17–20 GB）；内存与 CPU 为进程自身数值，可比；操作耗时的绝对秒数偏大，改前改后在同一窗口交替测量",
-    "build": "DOCKIT_OUT=build/perf-next ./build.sh（打包时自动运行 scripts/slim-runtime.py）",
-    "size": {
-      "download_bytes": 44766484,
-      "download_mb": 42.69,
-      "installed_bytes": 133103616,
-      "installed_mb": 126.94,
-      "files": 4637,
-      "method": "measure.py size；build/perf-next/DocKit-v1.1.0-arm64.zip 与 build/perf-next/DocKit.app",
-      "bytecode_cost": {
-        "installed_bytes": 24076288,
-        "download_bytes": 9114336,
-        "note": "预编译字节码占的部分；不带字节码时安装后 109.1 MB、下载 35.7 MB，但每次操作都要重新编译，耗时是现在的 2.2–3.6 倍"
-      },
-      "removed_bytes_by_rule": {
-        "dists": 84424477,
-        "devfiles": 3627319,
-        "tests": 19871691,
-        "stdlib": 14784694,
-        "lxml": 5245392,
-        "strip": 6704000
-      },
-      "remeasured": "2026-09-26 修复轮重建后（build/perf-next，zip sha256 b07eaed5…）",
-      "note": "2026-09-26 03:00 主会话用 python3 -B scripts/package.py --out build/perf-next 干净重打并复核（verify-package 通过，签名在复核前后均有效）；此前的 133,160,960 B 含测试运行时写入包内的 3 个 .pyc"
-    },
-    "idle": {
-      "process": "DocKit.app/Contents/MacOS/DocTools（build/perf-next）",
-      "footprint_mb": 46.0,
-      "cpu_pct": 0.0,
-      "window_s": 60,
-      "rest_s": 45,
-      "runs": [
-        {
-          "footprint_mb": 44.0,
-          "cpu_pct": 0.0,
-          "measured_at": "2026-09-26T00:13:43",
-          "loadavg_before": "{ 200.05 158.75 226.42 }"
-        },
-        {
-          "footprint_mb": 46.0,
-          "cpu_pct": 0.0,
-          "measured_at": "2026-09-26T00:15:32",
-          "loadavg_before": "{ 228.93 183.08 227.86 }"
-        }
-      ],
-      "method": "open -n -g -j 后台隐藏启动，静置 45 秒后用 measure.py idle 采样 60 秒（phys_footprint 峰值，活动监视器「内存」列同口径）；CPU = 进程 CPU 时间增量 ÷ 墙钟；2 次，内存取峰值、CPU 取平均"
-    },
-    "speed_ops": [
-      {
-        "key": "gui-ops",
-        "label": "启动时读取操作列表",
-        "median_ms": 285,
-        "runs": 3
-      },
-      {
-        "key": "clean docx",
-        "label": "docx 规范化",
-        "median_ms": 813,
-        "runs": 3
-      },
-      {
-        "key": "docx→md",
-        "label": "docx → Markdown",
-        "median_ms": 4135,
-        "runs": 3
-      },
-      {
-        "key": "xlsx→txt",
-        "label": "Excel → txt（pandas）",
-        "median_ms": 1952,
-        "runs": 3
-      },
-      {
-        "key": "pptx→md",
-        "label": "pptx → Markdown",
-        "median_ms": 689,
-        "runs": 3
-      },
-      {
-        "key": "md→word",
-        "label": "Markdown → Word",
-        "median_ms": 1187,
-        "runs": 3
-      }
-    ],
-    "speed_ops_method": "直接调用应用内 python3.12 -s -B backend/doc_gui_backend.py（与 App 相同参数与环境），三个版本按操作交替各 3 轮取中位数，虚构演示文档；原始数据 perf/raw/next-20260926-op-latency.json",
-    "task_memory": {
-      "key": "docx→md 子进程",
-      "peak_footprint_mb": 90.3,
-      "cpu_user_s": [
-        1.2,
-        1.5
-      ],
-      "method": "/usr/bin/time -l，活动说明.docx，2 次"
-    },
-    "changes": [
-      "docx→Markdown 改由 backend/docx_to_md.py 调用 markitdown 自带命令行，并用约 140 行的内容识别替身顶替 magika：真 docx 与扩展名一致；扩展名是 .docx、内容其实是 HTML/纯文本/CSV/XML/pptx/xlsx/zip/老 xls 的文件按内容选 markitdown 的转换器，与带 magika 的 v1.1.0 输出相同（例如 <h1>标题</h1><p>段落</p> → \"# 标题\n\n段落\"）；16 份真实文档逐字节相同",
-      "打包时不再带 magika、onnxruntime 及只被它们依赖的 flatbuffers、protobuf、packaging、click、python-dotenv（约 84 MB）",
-      "去掉 pandas、numpy 等包自带的测试目录（约 20 MB）和类型存根、Cython 源、C 头文件（约 3.6 MB）",
-      "去掉标准库里用不到的 Tk 图形界面（含 Tcl/Tk 库）、IDLE、turtle、ensurepip（含 pip 安装包）、lib2to3、pydoc 帮助数据、头文件与手册（约 15 MB）；带版本号的 Tcl/Tk 路径改为通配，每条规则至少要匹配到一个路径，否则构建报错",
-      "去掉没有任何模块导入的 lxml.objectify 扩展（约 5 MB）",
-      "所有 .so/.dylib 与解释器执行 strip -x 去掉本地调试符号（约 6.7 MB），打包脚本随后逐个重新签名",
-      "为各项操作实际导入的 1169 个模块预编译 .pyc（unchecked-hash，约 21 MB）：App 以 -B 运行 Python，原来每次操作都从源码重新编译 pandas、python-docx 等；包内 .py 被改后不会自动重新编译，README 已写明",
-      "以上全部写进 scripts/slim-runtime.py，由 scripts/package.py 在签名前自动执行；守卫用包内 python3.12 的语法解析器读取所有随包发出的 .py（运行时、各包与 backend）的 import 语句和字面量 import_module 调用（跳过 TYPE_CHECKING 块），命中被删模块即构建失败，已知安全的 4 处写明原因",
-      "修原有问题：老 .ppt 转 Markdown 以前被 pptx 引擎「跳过」后仍显示成功；现在装了 LibreOffice 时先另存为 .pptx 再转，没装就如实失败并提示先另存为 .pptx；格式转换没有产出新文件一律算失败，失败行显示调度器给出的原因",
-      "修原有问题：合并多个 .txt（按列合并成 merged.csv）以前把文件当目录传给引擎而失败；引擎现在接受文件列表并在失败时返回非零退出码",
-      "scripts/verify-package.py 支持 --app 指定包，覆盖其余转换路线、扩展名与内容不符的 .docx、合并 txt、老 .ppt（有 LibreOffice 时断言产出 Markdown，没装时断言明确失败信息），可用 --record-modules 重新生成字节码清单；单项超时默认 90 秒，可用 DOCKIT_VERIFY_TIMEOUT 调高"
-    ],
-    "verification": {
-      "verify_package": "build/perf-next 上 31 个用例全部通过，另验证没装 LibreOffice 时老 .ppt 明确失败、部分成功与非法选项被拒（断网、空 HOME、仅系统 PATH、改名目录、原件哈希不变、签名校验；有 LibreOffice 的 .ppt 用例只额外放行 /tmp 下的本地 socket）",
-      "equivalence": "30 个操作与发布版逐一比较：28 个产出逐一相同，2 个是本轮有意修正（老 .ppt 不再假成功、合并 txt 产出 merged.csv）；16 份真实 docx→md 逐字节相同 16/16；20 个扩展名 .docx 而内容不符的文件 18 个与发布版相同，另 2 个见 equivalence.json",
-      "slim_guard": "正反例：backend 里加 from packaging.version import Version / import dotenv、函数内 import tkinter、相对导入被删测试包、import_module(\"magika\") 均使构建失败；TYPE_CHECKING 块内的导入放行；Tcl/Tk 目录改成新版本号仍被通配删除，缺一条规则匹配时在删除任何文件之前报错",
-      "raw": [
-        "perf/raw/next-20260926-equivalence.json",
-        "perf/raw/next-20260926-package-verification.json",
-        "perf/raw/next-20260926-size.json",
-        "perf/raw/next-20260926-idle.jsonl"
-      ]
-    },
-    "before_same_method": {
-      "version": "1.1.0 发布包（dist/DocKit-v1.1.0-arm64.zip 解压副本）",
-      "size": {
-        "download_bytes": 77124311,
-        "installed_bytes": 251797504,
-        "files": 6833
-      },
-      "idle": {
-        "process": "DocKit.app/Contents/MacOS/DocTools（v1.1.0 发布包解压副本）",
-        "footprint_mb": 46.0,
-        "cpu_pct": 0.06,
-        "window_s": 60,
-        "rest_s": 45,
-        "runs": [
-          {
-            "footprint_mb": 46.0,
-            "cpu_pct": 0.08,
-            "measured_at": "2026-09-25T23:22:10",
-            "loadavg_before": "{ 101.30 71.70 63.94 }"
-          },
-          {
-            "footprint_mb": 46.0,
-            "cpu_pct": 0.03,
-            "measured_at": "2026-09-25T23:24:00",
-            "loadavg_before": "{ 220.43 119.43 83.30 }"
-          }
-        ],
-        "method": "open -n -g -j 后台隐藏启动，静置 45 秒后用 measure.py idle 采样 60 秒（phys_footprint 峰值，活动监视器「内存」列同口径）；CPU = 进程 CPU 时间增量 ÷ 墙钟；2 次，内存取峰值、CPU 取平均"
-      },
-      "speed_ops": [
-        {
-          "key": "gui-ops",
-          "label": "启动时读取操作列表",
-          "median_ms": 617,
-          "runs": 3
-        },
-        {
-          "key": "clean docx",
-          "label": "docx 规范化",
-          "median_ms": 3146,
-          "runs": 3
-        },
-        {
-          "key": "docx→md",
-          "label": "docx → Markdown",
-          "median_ms": 9872,
-          "runs": 3
-        },
-        {
-          "key": "xlsx→txt",
-          "label": "Excel → txt（pandas）",
-          "median_ms": 4576,
-          "runs": 3
-        },
-        {
-          "key": "pptx→md",
-          "label": "pptx → Markdown",
-          "median_ms": 2100,
-          "runs": 3
-        },
-        {
-          "key": "md→word",
-          "label": "Markdown → Word",
-          "median_ms": 3136,
-          "runs": 3
-        }
-      ],
-      "task_memory": {
-        "key": "docx→md 子进程（python -m markitdown）",
-        "peak_footprint_mb": 128.4,
-        "cpu_user_s": [
-          4.48,
-          4.6
-        ]
-      }
-    },
-    "measure_note": "size 与 verification 为修复轮重建后重测；idle、speed_ops、task_memory 沿用修复前同轮构建的测量（修复只改了扩展名与内容不符的 .docx 识别、.ppt/合并 txt 路径和构建守卫，不在空闲与这些操作的路径上）",
-    "verification_main_session": "verify-package（断网、空 HOME、搬迁路径）在干净重打的 build/perf-next/DocKit.app 上通过；codesign --verify --deep --strict 在复核前后均通过"
-  },
-  "why": "SwiftUI 界面；文档处理靠包内 Python 3.12 与 pandas 等库，只在启动读操作列表和点「执行」时起子进程、做完即退出，空闲只剩界面进程；包内含完整 Python，体积较大。",
-  "why_en": "SwiftUI interface; document work runs in the bundled Python 3.12 with pandas and other libraries, started as a subprocess only to read the operation list at launch and when you click Run, and it exits when done, so only the UI process remains while idle. The bundle carries a full Python runtime, so it is large."
+  ]
 }

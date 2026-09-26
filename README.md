@@ -11,11 +11,11 @@ Mac 上的本地文档工具：统一中文引号、整理标点与单位、转�
 
 | 安装包 | 空闲内存 | 空闲 CPU | 冷启动到窗口出现 |
 |---|---|---|---|
-| **77.1 MB**（装好后 252 MB） | **46 MB** | **0.06%** | **981 ms** |
+| **44.7 MB**（装好后 132 MB） | **43 MB** | **0.07%** | **957 ms** |
 
-SwiftUI 界面；文档处理靠包内 Python 3.12 与 pandas 等库，只在启动读操作列表和点「执行」时起子进程、做完即退出，空闲只剩界面进程；包内含完整 Python，体积较大。
+SwiftUI 界面；文档处理靠包内 Python 3.12，只在启动读操作列表和点「执行」时起子进程、做完即退出，空闲只剩界面进程。运行时只带各项操作实际用到的部分：docx 转 Markdown 用约 140 行的内容识别代替 magika 与 onnxruntime 模型运行时，去掉各库测试目录和用不到的标准库，二进制去掉调试符号；各项操作用到的模块预编译成字节码，不再每次从源码编译。
 
-<sub>v1.1.0 · Mac16,12 / Apple M4 / macOS 27.2 · 2026-09-26 本机实测。内存为 phys_footprint（活动监视器「内存」列同口径）；CPU 为静置后 60 秒内 CPU 时间 ÷ 墙钟；大小按十进制 MB。原始数据见 [perf/lightweight.json](perf/lightweight.json)。</sub>
+<sub>v1.1.1 · Mac16,12 / Apple M4 / macOS 27.2 · 2026-09-26 本机实测。内存为 phys_footprint（活动监视器「内存」列同口径）；CPU 为静置后 60 秒内 CPU 时间 ÷ 墙钟；大小按十进制 MB。原始数据见 [perf/lightweight.json](perf/lightweight.json)。</sub>
 <!-- lightweight:end -->
 
 ## 安装

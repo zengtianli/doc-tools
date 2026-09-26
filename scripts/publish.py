@@ -54,7 +54,10 @@ if a.upload:
     existing=subprocess.run(["gh","release","view",manifest["tag"],"--repo","zengtianli/doc-tools"],cwd=ROOT,capture_output=True)
     if existing.returncode==0: raise SystemExit("This release already exists. Inspect its assets before retrying; no overwrite performed.")
     notes=ROOT/"build/release-notes.md"
-    notes.write_text(f'DocKit {manifest["version"]} (build {manifest["build"]}): 内置文档运行环境，支持本地离线处理；原件保留、每次任务独立输出；规则与范围可勾选。\n\nmacOS 15+，Apple Silicon。安装教程：https://app-mac-doctools.tianli.cyou/#install\n\nBinary source commit: `{source}`\n\nSHA-256: `{manifest["sha256"]}`\n')
+    # A reviewed docs/releases/v<version>.md replaces the generic summary; install, source and hash lines stay generated.
+    written=ROOT/"docs/releases"/f'v{manifest["version"]}.md'
+    summary=written.read_text().strip() if written.is_file() else f'DocKit {manifest["version"]}: 内置文档运行环境，支持本地离线处理；原件保留、每次任务独立输出；规则与范围可勾选。'
+    notes.write_text(f'{summary}\n\nBuild {manifest["build"]} · macOS 15+，Apple Silicon。安装教程：https://app-mac-doctools.tianli.cyou/#install\n\nBinary source commit: `{source}`\n\nSHA-256: `{manifest["sha256"]}`\n')
     run(["gh","release","create",manifest["tag"],str(archive),str(ROOT/"dist/release-manifest.json"),"--repo","zengtianli/doc-tools","--target",source,"--title","DocKit "+manifest["version"],"--notes-file",str(notes)])
     run(["gh","release","view",manifest["tag"],"--repo","zengtianli/doc-tools","--json","url,assets"])
 print("Website package ready for the existing apps-site deployment entry: build/site/")
