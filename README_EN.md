@@ -20,7 +20,7 @@ SwiftUI interface; document work runs in the bundled Python 3.12 with pandas and
 
 ## Installation
 
-Requires **macOS 15 or later and an Apple Silicon Mac**. Download `DocKit-v1.1.0-arm64.zip`, extract it, and drag `DocKit.app` into Applications. The public bundle ID remains `io.github.zengtianli.DocTools`; the source repository is still named doc-tools.
+Requires **macOS 15 or later and an Apple Silicon Mac**. Download `DocKit-v1.1.1-arm64.zip`, extract it, and drag `DocKit.app` into Applications. The public bundle ID remains `io.github.zengtianli.DocTools`; the source repository is still named doc-tools.
 
 The release includes Python and document dependencies. Common operations require no uv, Python, or Office installation and no account; file contents are processed locally. The app has no background document process and starts the engine only while running a task.
 
@@ -67,7 +67,7 @@ python3 scripts/verify-package.py
 bash scripts/check-ui-state.sh
 ```
 
-Outputs: `build/DocKit.app`, `dist/DocKit-v1.1.0-arm64.zip`, and `dist/release-manifest.json`. Building does not automatically replace the locally installed version. The document engine and dependencies for supported formats are in `Contents/Resources`, with no runtime dependency on the author’s workspace.
+Outputs: `build/DocKit.app`, `dist/DocKit-v1.1.1-arm64.zip`, and `dist/release-manifest.json`. Building does not automatically replace the locally installed version. The document engine and dependencies for supported formats are in `Contents/Resources`, with no runtime dependency on the author’s workspace.
 
 During packaging, `scripts/slim-runtime.py` leaves out what the runtime never uses (magika/onnxruntime, package test suites, Tk and more; a removed module that is still imported fails the build) and precompiles unchecked-hash `.pyc` files for the modules the operations import. Python never compares these `.pyc` files with their `.py` sources, so editing a `.py` inside a built `DocKit.app` does not trigger recompilation and the old bytecode keeps running; change the backend in the source tree and rebuild.
 

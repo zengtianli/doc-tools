@@ -20,7 +20,7 @@ SwiftUI 界面；文档处理靠包内 Python 3.12 与 pandas 等库，只在启
 
 ## 安装
 
-需要 **macOS 15 或更高版本、Apple Silicon Mac**。下载 `DocKit-v1.1.0-arm64.zip`，解压后把 `DocKit.app` 拖入「应用程序」。公开版 bundle ID 保持 `io.github.zengtianli.DocTools`，源码仓仍叫 doc-tools。
+需要 **macOS 15 或更高版本、Apple Silicon Mac**。下载 `DocKit-v1.1.1-arm64.zip`，解压后把 `DocKit.app` 拖入「应用程序」。公开版 bundle ID 保持 `io.github.zengtianli.DocTools`，源码仓仍叫 doc-tools。
 
 发布包已经包含 Python 与文档依赖，常用操作不需要安装 uv、Python 或 Office，不需要账号，文件内容在本机处理。应用没有后台文档进程，执行任务时才启动引擎。
 
@@ -67,7 +67,7 @@ python3 scripts/verify-package.py
 bash scripts/check-ui-state.sh
 ```
 
-产物：`build/DocKit.app`、`dist/DocKit-v1.1.0-arm64.zip` 和 `dist/release-manifest.json`。构建不自动替换本机安装版。文档引擎和受支持格式的依赖在 `Contents/Resources`，没有对作者工作区的运行时依赖。
+产物：`build/DocKit.app`、`dist/DocKit-v1.1.1-arm64.zip` 和 `dist/release-manifest.json`。构建不自动替换本机安装版。文档引擎和受支持格式的依赖在 `Contents/Resources`，没有对作者工作区的运行时依赖。
 
 打包时 `scripts/slim-runtime.py` 去掉运行时用不到的部分（magika/onnxruntime、各包测试目录、Tk 等；仍被导入的模块会让构建失败），并为各项操作用到的模块预编译 unchecked-hash 的 `.pyc`。Python 不会拿这些 `.pyc` 与 `.py` 比对，所以直接修改构建好的 `DocKit.app` 里的 `.py` 不会触发重新编译，仍运行旧字节码；改后端请改源码后重新构建。
 
