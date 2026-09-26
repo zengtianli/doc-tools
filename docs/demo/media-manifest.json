@@ -322,5 +322,14 @@
     "editor": "passed: source start/middle/end and action frames; final captions, selection changes, processing states and success/partial-success results",
     "main_thread": "passed: reviewed all three posters, the 390px mobile page, image loading, video metadata readiness and the matching 5:4 ratio; no claim of frame-by-frame full-video review",
     "scope": "Three captioned scenes and their chapter compilation; complete decode and black-area checks passed. Screenshot preserved without editing."
+  },
+  "ui_sources_sha256": "9608a747b0f774d09984c032f545c1106c62586100f534e7976659c17e2990ed",
+  "reused_for": {
+    "1.1.1": {
+      "build": "24",
+      "release_sha256": "05aae4b16ae78f6ed9087c2c8a51846d7deed9e9d3f353aece51fca573a28ceb",
+      "reason": "Sources/ 与录制时的 1.1.0 build 16 逐字节相同；1.1.1 只改打包运行时瘦身与后端转换修复，界面未变",
+      "checked": "2026-09-26"
+    }
   }
 }

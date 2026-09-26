@@ -17,6 +17,12 @@ ap=argparse.ArgumentParser();ap.add_argument("--preview",action="store_true");a=
 release=json.loads((ROOT/"dist/release-manifest.json").read_text())
 archive=ROOT/"dist"/release["filename"]
 assert hashlib.sha256(archive.read_bytes()).hexdigest()==release["sha256"],"Release archive hash mismatch"
+def ui_sources_sha256():
+    """Hash of every file under Sources/ (path and bytes, sorted): the UI shown in the recordings."""
+    h=hashlib.sha256()
+    for f in sorted(p for p in (ROOT/"Sources").rglob("*") if p.is_file()):
+        h.update(str(f.relative_to(ROOT)).encode()+b"\0"+f.read_bytes()+b"\0")
+    return h.hexdigest()
 media=ROOT/"docs/demo"
 clips=[("quotes","只统一引号","选中 Word，保留单位和页眉，只处理选定范围。"),
        ("convert","把 Word 变成 Markdown","选择目标格式，转换结果单独保存。"),
@@ -26,9 +32,15 @@ missing=[n for n in needed if not (media/n).is_file()]
 if not a.preview:
     if missing: raise SystemExit("Missing real product media: "+", ".join(missing))
     evidence=json.loads((media/"media-manifest.json").read_text())
-    if evidence.get("version")!=release["version"]: raise SystemExit("Recorded product version does not match release")
-    if str(evidence.get("build"))!=str(release.get("build")): raise SystemExit("Recorded product build does not match release")
-    if evidence.get("release_sha256")!=release["sha256"]: raise SystemExit("Recorded release archive does not match download")
+    if evidence.get("version")==release["version"]:
+        if str(evidence.get("build"))!=str(release.get("build")): raise SystemExit("Recorded product build does not match release")
+        if evidence.get("release_sha256")!=release["sha256"]: raise SystemExit("Recorded release archive does not match download")
+    else:
+        # A later release may reuse the recording only when its UI sources are byte-identical to the
+        # recorded build and the manifest names that exact release (build and archive hash).
+        reuse=(evidence.get("reused_for") or {}).get(release["version"]) or {}
+        if evidence.get("ui_sources_sha256")!=ui_sources_sha256(): raise SystemExit("Recorded product version does not match release, and the UI sources changed since the recording")
+        if str(reuse.get("build"))!=str(release.get("build")) or reuse.get("release_sha256")!=release["sha256"]: raise SystemExit("Recorded product version does not match release, and the manifest does not name this release for reuse")
     if evidence.get("screenshot_sha256")!=hashlib.sha256((media/"screenshot.png").read_bytes()).hexdigest(): raise SystemExit("Screenshot does not match reviewed media")
     for name in [item[0] for item in clips]+["tutorial"]:
         if evidence["checks"][name]["sha256"]!=hashlib.sha256((media/(name+".mp4")).read_bytes()).hexdigest(): raise SystemExit("Video does not match media manifest: "+name)
