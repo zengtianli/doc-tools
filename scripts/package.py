@@ -24,7 +24,12 @@ if app.exists(): shutil.rmtree(app)
 resources = app / "Contents/Resources"
 (app / "Contents/MacOS").mkdir(parents=True)
 resources.mkdir()
-shutil.copy2(ROOT / "build/DocTools", app / "Contents/MacOS/DocTools")
+executable = app / "Contents/MacOS/DocTools"
+shutil.copy2(ROOT / "build/DocTools", executable)
+# Release strip: drop the executable's local symbols (build/DocTools keeps them); exported and
+# undefined symbols stay, so nothing changes at run time. swiftc runs without -g, so there is no
+# debug map to remove. The bundled runtime is stripped by slim-runtime.py; everything is signed below.
+subprocess.run(["strip", "-x", str(executable)], check=True)
 shutil.copy2(ROOT / "icon/AppIcon.icns", resources / "AppIcon.icns")
 shutil.copytree(ROOT / "backend", resources / "backend", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
 shutil.copytree(ROOT / "build/runtime/python", resources / "python", symlinks=True)
@@ -38,10 +43,18 @@ info.update(CFBundleName="DocKit", CFBundleDisplayName="DocKit", CFBundleShortVe
             NSHumanReadableCopyright="DocKit · MIT License")
 (app / "Contents/Info.plist").write_bytes(plistlib.dumps(info))
 magics = {b"\xcf\xfa\xed\xfe", b"\xce\xfa\xed\xfe", b"\xca\xfe\xba\xbe", b"\xfe\xed\xfa\xcf"}
+def local_symbols(path):
+    # nm's type letter is column 18 (symbol names may contain spaces); t/d/b/s are local symbols.
+    listing = subprocess.run(["nm", "-a", str(path)], capture_output=True, text=True, check=True).stdout
+    return sum(1 for line in listing.splitlines() if len(line) > 18 and line[16] == " " and line[18] == " " and line[17] in "tdbs")
+unstripped = [f"MacOS/DocTools: {n}" for n in [local_symbols(executable)] if n]
 for path in resources.rglob("*"):
     if not path.is_file() or path.is_symlink(): continue
     with path.open("rb") as handle: magic = handle.read(4)
-    if magic in magics: subprocess.run(["codesign", "--force", "--sign", "-", str(path)], check=True, capture_output=True)
+    if magic in magics:
+        if (n := local_symbols(path)): unstripped.append(f"{path.relative_to(app / 'Contents')}: {n}")
+        subprocess.run(["codesign", "--force", "--sign", "-", str(path)], check=True, capture_output=True)
+if unstripped: sys.exit("package: local symbols left in the release app (fail-closed):\n  " + "\n  ".join(unstripped))
 subprocess.run(["codesign", "--force", "--sign", "-", str(app)], check=True)
 subprocess.run(["codesign", "--verify", "--deep", "--strict", str(app)], check=True)
 dist = out or ROOT / "dist"
