@@ -149,7 +149,19 @@ final class DocKitAppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+// Entry point: `--ui-self-test` runs the offscreen in-process UI self-test
+// (UISelfTest.swift) before any scene exists and exits 0/1; every other
+// launch goes straight to the SwiftUI App exactly as before.
 @main
+enum DocKitMain {
+    static func main() {
+        if CommandLine.arguments.contains("--ui-self-test") {
+            UISelfTest.runAndExit()
+        }
+        DocToolsApp.main()
+    }
+}
+
 struct DocToolsApp: App {
     @NSApplicationDelegateAdaptor(DocKitAppDelegate.self) private var appDelegate
 

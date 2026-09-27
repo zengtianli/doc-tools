@@ -30,3 +30,8 @@ project.yaml
 
 # Local tooling config — not part of the published project.
 .claude/
+
+# Local acceptance evidence (absolute machine paths, screenshots) and maintainer handoffs.
+perf/acceptance/
+perf/delivery-evidence.json
+handoffs/

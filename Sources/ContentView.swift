@@ -60,8 +60,15 @@ struct StatusBanner: View {
 
 
 struct ContentView: View {
-    @StateObject private var vm = AppViewModel()
+    @StateObject private var vm: AppViewModel
     @State private var showPalette = false   // ⌘K 命令面板浮层开关
+    /// Self-test hook only (UISelfTest): observes palette visibility; nil in the app.
+    private let paletteObserver: ((Bool) -> Void)?
+
+    init(vm: AppViewModel? = nil, paletteObserver: ((Bool) -> Void)? = nil) {
+        _vm = StateObject(wrappedValue: vm ?? AppViewModel())
+        self.paletteObserver = paletteObserver
+    }
 
     var body: some View {
         NavigationSplitView {
@@ -124,6 +131,7 @@ struct ContentView: View {
             }
         }
         .commandPalette(items: paletteItems, isPresented: $showPalette)
+        .onChange(of: showPalette) { paletteObserver?(showPalette) }
     }
 
 

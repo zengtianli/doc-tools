@@ -314,18 +314,27 @@ def gui_run(op_id: str, files: list[str], target: str | None, opts: dict | None 
     name = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + op["title"] + "-" + uuid.uuid4().hex[:6]
     output_root = Path(os.environ["DOCKIT_OUTPUT_DIR"]).expanduser() if os.environ.get("DOCKIT_OUTPUT_DIR") else valid[0].parent / "DocKit 输出"
     workspace = output_root / name
-    workspace.mkdir(parents=True, exist_ok=False)
+    # Reject bad arguments before creating anything, so a failed call leaves no stray folder.
+    invalid = _validate_args(op, target, opts)
+    if invalid:
+        return invalid
     originals = {}
     staged = []
-    for source in valid:
-        destination = workspace / source.name
-        index = 2
-        while destination.exists():
-            destination = workspace / f"{source.stem}-{index}{source.suffix}"
-            index += 1
-        shutil.copy2(source, destination)
-        staged.append(str(destination))
-        originals[str(destination)] = str(source)
+    try:
+        workspace.mkdir(parents=True, exist_ok=False)
+        for source in valid:
+            destination = workspace / source.name
+            index = 2
+            while destination.exists():
+                destination = workspace / f"{source.stem}-{index}{source.suffix}"
+                index += 1
+            shutil.copy2(source, destination)
+            staged.append(str(destination))
+            originals[str(destination)] = str(source)
+    except PermissionError:
+        return {"ok": False, "error": f"没有权限写入输出文件夹「{output_root}」,请换一个可写的位置"}
+    except OSError as e:
+        return {"ok": False, "error": f"无法准备输出文件夹「{output_root}」:{e.strerror or e}"}
     result = _gui_run_copies(op_id, staged, target, opts)
     for row in result.get("results", []):
         row["input"] = originals.get(row["input"], row["input"])
@@ -340,19 +349,9 @@ def _gui_run_copies(op_id: str, files: list[str], target: str | None, opts: dict
     if not op:
         return {"ok": False, "error": f"未知操作: {op_id}(支持 {', '.join(_OPS_BY_ID)})"}
 
-    # 选项校验:未知 key / 非布尔值一律走信封 ok:false,**不许 argparse exit 2**
-    # (本文件契约:所有 gui-* 一律 exit 0,成败只由信封承载)
-    declared = {o["id"] for o in op.get("options", [])}
-    if opts:
-        bad = sorted(set(opts) - declared)
-        if bad:
-            return {"ok": False,
-                    "error": f"未知选项: {', '.join(bad)}"
-                             + (f"(该操作可用 {', '.join(sorted(declared))})" if declared
-                                else "(该操作不接受选项)")}
-        for k, v in opts.items():
-            if str(v).strip().lower() not in ("0", "1", "true", "false", "yes", "no", "on", "off"):
-                return {"ok": False, "error": f"选项 {k} 的值 {v!r} 不是布尔(用 1/0)"}
+    invalid = _validate_args(op, target, opts)
+    if invalid:
+        return invalid
 
     if op["kind"] == "dir":
         # scan:吃一个目录
@@ -376,9 +375,6 @@ def _gui_run_copies(op_id: str, files: list[str], target: str | None, opts: dict
             }],
             "log": log.strip(),
         } if rc == 0 else {"ok": False, "error": "敏感词扫描失败", "log": log.strip()}
-
-    if op_id == "convert" and not target:
-        return {"ok": False, "error": "格式转换需指定目标格式(--to)"}
 
     existing = [f for f in files if Path(f).exists()]
     missing = [f for f in files if not Path(f).exists()]
@@ -420,7 +416,9 @@ def _gui_run_copies(op_id: str, files: list[str], target: str | None, opts: dict
         outs = _new_outputs(before, _snapshot(roots), {f})
         # In-place engines operate on this staged copy, so return that copy as well.
         # A conversion always writes a new file: exiting 0 without one is a failure, not an edit.
-        if rc == 0 and op_id != "convert" and (not outs or op_id in ("fontunify",)):
+        # A .backup is the untouched original, never the result the user should open.
+        if rc == 0 and op_id != "convert" and (not [p for p in outs if not p.endswith(".backup")]
+                                                or op_id in ("fontunify",)):
             outs = [f] + [p for p in outs if not p.endswith(".backup")]
         ok = rc == 0 and bool(outs)
         results.append({
@@ -434,11 +432,36 @@ def _gui_run_copies(op_id: str, files: list[str], target: str | None, opts: dict
     return _wrap(op_id, results, missing, "\n".join(full_log))
 
 
+def _validate_args(op: dict, target: str | None, opts: dict | None) -> dict | None:
+    """选项校验:未知 key / 非布尔值 / 缺 --to 一律走信封 ok:false,**不许 argparse exit 2**
+    (本文件契约:所有 gui-* 一律 exit 0,成败只由信封承载)。"""
+    declared = {o["id"] for o in op.get("options", [])}
+    if opts:
+        bad = sorted(set(opts) - declared)
+        if bad:
+            return {"ok": False,
+                    "error": f"未知选项: {', '.join(bad)}"
+                             + (f"(该操作可用 {', '.join(sorted(declared))})" if declared
+                                else "(该操作不接受选项)")}
+        for k, v in opts.items():
+            if str(v).strip().lower() not in ("0", "1", "true", "false", "yes", "no", "on", "off"):
+                return {"ok": False, "error": f"选项 {k} 的值 {v!r} 不是布尔(用 1/0)"}
+    if op["id"] == "convert" and not target:
+        return {"ok": False, "error": "格式转换需指定目标格式(--to)"}
+    return None
+
+
 def _failure_message(log: str, rc: int) -> str:
     """失败行的一句话:调度器用「✖ …」写给用户的原因(例如老 .ppt 该怎么办)优先,其次通用提示。"""
     reasons = [line.strip()[1:].strip() for line in log.splitlines() if line.strip().startswith("✖")]
     if reasons:
         return reasons[-1]
+    # 子引擎用「❌ 处理失败：<原因>」报错;损坏/非 Office 文件给一句人话,而不是 zipfile 的英文。
+    errors = [line.strip().lstrip("❌").strip() for line in log.splitlines() if line.strip().startswith("❌")]
+    if errors:
+        if any("not a zip file" in e.lower() or "package not found" in e.lower() for e in errors):
+            return "文件已损坏或不是有效的 Office 文档"
+        return errors[-1]
     return "无对应引擎/未产出(可能此格式不支持该操作)" if rc == 0 else "处理失败(详见日志)"
 
 
