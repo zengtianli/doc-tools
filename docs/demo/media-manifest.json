@@ -330,6 +330,14 @@
       "release_sha256": "05aae4b16ae78f6ed9087c2c8a51846d7deed9e9d3f353aece51fca573a28ceb",
       "reason": "Sources/ 与录制时的 1.1.0 build 16 逐字节相同；1.1.1 只改打包运行时瘦身与后端转换修复，界面未变",
       "checked": "2026-09-26"
+    },
+    "1.1.2": {
+      "build": "31",
+      "release_sha256": "22c7779071af72409367d26c49aa7dc20deaa4ab2ad700ca1b4a9ebafdf8d8e3",
+      "ui_sources_sha256": "f253d1b3c628d3ea02cc03fa8e3b26c88ab0bee788945ba9257a293caf794d8f",
+      "ui_changes": "相对录制时的 Sources/ 只增加进程内离屏界面自检：新文件 UISelfTest.swift（仅 --ui-self-test 时运行）、DocToolsApp.swift 的入口包装（无该参数时直接进入原 App）、ContentView.swift 的可选注入参数与可选回调（App 中均为 nil，不改绘制）；界面与交互未变",
+      "reason": "1.1.2 只修后端失败路径与 pptx 结果文件；界面沿用 1.1.0 build 16 录制",
+      "checked": "2026-09-29"
     }
   }
 }

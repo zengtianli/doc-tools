@@ -35,3 +35,4 @@ project.yaml
 perf/acceptance/
 perf/delivery-evidence.json
 handoffs/
+perf/build-receipt.json
