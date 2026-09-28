@@ -125,7 +125,7 @@
       "perf/raw/v1.1.1-package-verification.json"
     ]
   },
-  "env_note": "2026-09-29 主会话逐个顺序测量，负载均值 8.18 10.89 52.34；total = 5120.00M  used = 3734.75M  free = 1385.25M（开始时）；启动时间受负载影响，内存与 CPU 为进程自身数值",
+  "env_note": "2026-09-29 主会话逐个顺序测量，负载均值 2.79 3.61 6.21；total = 6144.00M  used = 5288.38M  free = 855.62M（开始时）；启动时间受负载影响，内存与 CPU 为进程自身数值",
   "why": "SwiftUI 界面；文档处理靠包内 Python 3.12，只在启动读操作列表和点「执行」时起子进程、做完即退出，空闲只剩界面进程。运行时只带各项操作实际用到的部分：docx 转 Markdown 用约 140 行的内容识别代替 magika 与 onnxruntime 模型运行时，去掉各库测试目录和用不到的标准库，二进制去掉调试符号；各项操作用到的模块预编译成字节码，不再每次从源码编译。",
   "why_en": "SwiftUI interface; document work runs in the bundled Python 3.12, started as a subprocess only to read the operation list at launch and when you click Run, and it exits when done, so only the UI process remains while idle. The runtime ships only what the operations use: a ~140-line content sniffer replaces magika and the onnxruntime model runtime for docx to Markdown, library test folders and unused standard-library parts are removed, binaries are stripped, and the modules the operations import are precompiled so nothing is recompiled from source on each run.",
   "history": [
@@ -524,43 +524,88 @@
         "method": "measure.py size；dist/DocKit-v1.1.1-arm64.zip 与其解压出的 DocKit.app；*_bytes 为字节，*_mb 为 MiB；页面按十进制 MB 显示",
         "archive_sha256": "05aae4b16ae78f6ed9087c2c8a51846d7deed9e9d3f353aece51fca573a28ceb"
       }
+    },
+    {
+      "section": "speed_gui.cold_launch_to_window",
+      "replaced_on": "2026-09-29",
+      "reason": "低负载下按 5 次重测",
+      "value": {
+        "key": "cold_launch_to_window",
+        "label": "冷启动到窗口出现",
+        "median_ms": 912,
+        "runs": 5,
+        "headline": true,
+        "raw_ms": [
+          766,
+          927,
+          699,
+          912,
+          1513
+        ],
+        "method": "open -g -j 后台隐藏启动，被动读取窗口列表直到主窗口出现；不点击、不激活；5 次取中位",
+        "load": "负载均值 9.47 11.04 51.67；total = 5120.00M  used = 4520.88M  free = 599.12M"
+      }
+    },
+    {
+      "section": "idle",
+      "replaced_on": "2026-09-29",
+      "reason": "本次按记录的采样窗口与辅助进程合计实测",
+      "value": {
+        "process": "~/Apps/oss/doc-tools-oss/build/perf-run/DocKit.app",
+        "footprint_mb": 43.0,
+        "main_footprint_mb": 43.0,
+        "cpu_pct": 0.0,
+        "main_cpu_pct": 0.0,
+        "processes": [
+          {
+            "name": "main",
+            "cpu_pct": 0.0,
+            "footprint_peak_mb": 43.0
+          }
+        ],
+        "window_s": 60,
+        "settle_s": 45,
+        "measured_at": "2026-09-29",
+        "method": "open -g -j 后台启动，静置 45 秒后 measure.py idle <PID> --seconds 60 --with-helpers：内存为主进程 + WebKit/XPC 辅助进程 + 子进程同一时刻 phys_footprint 之和的峰值（活动监视器「内存」列同口径），CPU 为这些进程窗口内 CPU 时间增量之和 ÷ 墙钟",
+        "load": "负载均值 7.92 10.32 46.27；total = 5120.00M  used = 4574.12M  free = 545.88M"
+      }
     }
   ],
   "speed_gui": [
     {
       "key": "cold_launch_to_window",
       "label": "冷启动到窗口出现",
-      "median_ms": 912,
+      "median_ms": 385,
       "runs": 5,
       "headline": true,
       "raw_ms": [
-        766,
-        927,
-        699,
-        912,
-        1513
+        423,
+        378,
+        387,
+        377,
+        385
       ],
       "method": "open -g -j 后台隐藏启动，被动读取窗口列表直到主窗口出现；不点击、不激活；5 次取中位",
-      "load": "负载均值 9.47 11.04 51.67；total = 5120.00M  used = 4520.88M  free = 599.12M"
+      "load": "负载均值 3.35 3.71 6.21；total = 6144.00M  used = 5280.38M  free = 863.62M"
     }
   ],
   "idle": {
     "process": "~/Apps/oss/doc-tools-oss/build/perf-run/DocKit.app",
-    "footprint_mb": 43.0,
-    "main_footprint_mb": 43.0,
+    "footprint_mb": 47.0,
+    "main_footprint_mb": 47.0,
     "cpu_pct": 0.0,
     "main_cpu_pct": 0.0,
     "processes": [
       {
         "name": "main",
         "cpu_pct": 0.0,
-        "footprint_peak_mb": 43.0
+        "footprint_peak_mb": 47.0
       }
     ],
     "window_s": 60,
     "settle_s": 45,
     "measured_at": "2026-09-29",
     "method": "open -g -j 后台启动，静置 45 秒后 measure.py idle <PID> --seconds 60 --with-helpers：内存为主进程 + WebKit/XPC 辅助进程 + 子进程同一时刻 phys_footprint 之和的峰值（活动监视器「内存」列同口径），CPU 为这些进程窗口内 CPU 时间增量之和 ÷ 墙钟",
-    "load": "负载均值 7.92 10.32 46.27；total = 5120.00M  used = 4574.12M  free = 545.88M"
+    "load": "负载均值 4.60 4.41 6.19；total = 6144.00M  used = 5272.38M  free = 871.62M"
   }
 }
