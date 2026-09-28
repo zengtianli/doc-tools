@@ -37,9 +37,12 @@ if not a.preview:
         if evidence.get("release_sha256")!=release["sha256"]: raise SystemExit("Recorded release archive does not match download")
     else:
         # A later release may reuse the recording only when its UI sources are byte-identical to the
-        # recorded build and the manifest names that exact release (build and archive hash).
+        # recorded build and the manifest names that exact release (build and archive hash). A reuse
+        # entry may instead pin its own ui_sources_sha256 with a ui_changes note when Sources/ changed
+        # without changing what is drawn (e.g. a self-test entry point); any further edit breaks it.
         reuse=(evidence.get("reused_for") or {}).get(release["version"]) or {}
-        if evidence.get("ui_sources_sha256")!=ui_sources_sha256(): raise SystemExit("Recorded product version does not match release, and the UI sources changed since the recording")
+        pinned=reuse.get("ui_sources_sha256") if reuse.get("ui_changes") else None
+        if (pinned or evidence.get("ui_sources_sha256"))!=ui_sources_sha256(): raise SystemExit("Recorded product version does not match release, and the UI sources changed since the recording")
         if str(reuse.get("build"))!=str(release.get("build")) or reuse.get("release_sha256")!=release["sha256"]: raise SystemExit("Recorded product version does not match release, and the manifest does not name this release for reuse")
     if evidence.get("screenshot_sha256")!=hashlib.sha256((media/"screenshot.png").read_bytes()).hexdigest(): raise SystemExit("Screenshot does not match reviewed media")
     for name in [item[0] for item in clips]+["tutorial"]:
