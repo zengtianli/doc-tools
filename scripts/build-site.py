@@ -10,10 +10,12 @@ import subprocess
 import sys
 sys.path.insert(0, str(Path.home() / "Apps/apps-portal/site"))
 import perf_block  # shared lightweight block; numbers come from perf/lightweight.json
+import product_facts  # facts.json published with the page for the portal and Chapter
 import zipfile
 
 ROOT=Path(__file__).resolve().parents[1]
-ap=argparse.ArgumentParser();ap.add_argument("--preview",action="store_true");a=ap.parse_args()
+ap=argparse.ArgumentParser();ap.add_argument("--preview",action="store_true")
+ap.add_argument("--out",type=Path,default=ROOT/"build/site",help="Site package root (default build/site)");a=ap.parse_args()
 release=json.loads((ROOT/"dist/release-manifest.json").read_text())
 archive=ROOT/"dist"/release["filename"]
 assert hashlib.sha256(archive.read_bytes()).hexdigest()==release["sha256"],"Release archive hash mismatch"
@@ -49,7 +51,7 @@ if not a.preview:
         if evidence["checks"][name]["sha256"]!=hashlib.sha256((media/(name+".mp4")).read_bytes()).hexdigest(): raise SystemExit("Video does not match media manifest: "+name)
         duration=float(subprocess.check_output(["ffprobe","-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",str(media/(name+".mp4"))],text=True))
         if duration<1: raise SystemExit("Invalid video: "+name)
-out=ROOT/"build/site"
+out=a.out
 if out.exists(): shutil.rmtree(out)
 (out/"images").mkdir(parents=True);(out/"downloads").mkdir();(out/"media").mkdir()
 shutil.copy2(ROOT/"icon/AppIcon.png",out/"images/icon.png")
@@ -89,6 +91,7 @@ page=(ROOT/"site/index.html").read_text()
 for key,value in replacements.items(): page=page.replace("{{"+key+"}}",value)
 if "{{" in page: raise SystemExit("Unresolved website placeholders")
 (out/"index.html").write_text(page)
+product_facts.write(out,product_facts.from_repo(ROOT,product_id="doc-tools",icon="images/icon.png"))
 files=[{"path":str(p.relative_to(out)),"sha256":hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(out.rglob("*")) if p.is_file()]
 (out/"site-manifest.json").write_text(json.dumps({"product":"DocKit","version":release["version"],"preview":a.preview,"files":files},ensure_ascii=False,indent=2)+"\n")
 print(out)
