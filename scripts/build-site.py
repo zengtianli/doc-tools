@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import html
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -85,8 +86,13 @@ if (media/"tutorial.mp4").is_file():
     for name in ("tutorial.mp4","tutorial.vtt","media-manifest.json"):
         if (media/name).is_file(): shutil.copy2(media/name,out/"media"/name)
     tutorial='<div class="demo-actions"><a class="text-link" href="media/tutorial.mp4" download>下载三段完整演示 ↓</a></div>'
+measured_version=json.loads((ROOT/"perf/lightweight.json").read_text())["version"].split(" ")[0]
+historical=measured_version!=release["version"] and os.environ.get("APP_RELEASE_KEEP_HISTORY")=="1"
+block=perf_block.standalone_section(ROOT/"perf/lightweight.json",measured_version if historical else release["version"],"#167e6d")
+if historical:
+    block=block.replace("资源占用与响应速度。",f"历史实测 · v{measured_version}。").replace("数字来自所列设备实测，版本更新后重新测量。",f"以下为 v{measured_version} 的历史实测，不代表当前 v{release['version']}；本轮未重复采样。")
 replacements={"VERSION":release["version"],"FILENAME":archive.name,"DOWNLOAD":"downloads/"+archive.name,
-              "SIZE":perf_block.size_mb(release["bytes"]),"LIGHT":perf_block.standalone_section(ROOT/"perf/lightweight.json",release["version"],"#167e6d"),"SCREENSHOT":shot,"VIDEOS":"".join(videos),"TUTORIAL":tutorial}
+              "SIZE":perf_block.size_mb(release["bytes"]),"LIGHT":block,"SCREENSHOT":shot,"VIDEOS":"".join(videos),"TUTORIAL":tutorial}
 page=(ROOT/"site/index.html").read_text()
 for key,value in replacements.items(): page=page.replace("{{"+key+"}}",value)
 if "{{" in page: raise SystemExit("Unresolved website placeholders")
