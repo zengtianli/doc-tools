@@ -18,6 +18,7 @@ import AppKit
 
 extension Notification.Name {
     static let consoleRefresh = Notification.Name("consoleRefresh")
+    static let dockitPreferencesChanged = Notification.Name("dockitPreferencesChanged")
 }
 
 // Recording is explicitly opt-in and valid only for a separately signed copy
@@ -167,6 +168,15 @@ struct DocToolsApp: App {
 
     init() {
         if DocKitRecording.requested { DocKitRecording.record("app_initialized") }
+        if !DocKitRecording.requested {
+            let configuration = AppConfiguration(productID: "io.github.zengtianli.DocTools",
+                defaultsKeys: AppViewModel.portablePreferenceKeys)
+            configuration.onChange = {
+                NotificationCenter.default.post(name: .dockitPreferencesChanged, object: nil)
+            }
+            AppLifecycleUI.install(name: "DocKit", configuration: configuration,
+                                   updateSource: .github(repository: "zengtianli/doc-tools"))
+        }
     }
 
     var body: some Scene {

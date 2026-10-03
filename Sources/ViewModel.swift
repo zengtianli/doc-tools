@@ -28,11 +28,15 @@ struct InputFile: Identifiable, Hashable {
 final class AppViewModel: ObservableObject {
     @Published var banner: BannerMsg?
     @Published var isLoadingOps = false
-    @Published var isRunning = false
+    @Published var isRunning = false {
+        didSet { if !isRunning && pendingPreferenceRestore { reloadPortablePreferences() } }
+    }
 
     @Published var ops: [DocOp] = []
     @Published var selectedOpID: String?
-    @Published var selectedTargetID: String?     // 单选槽（convert/renum/bidfinal）
+    @Published var selectedTargetID: String? {
+        didSet { rememberTarget() }
+    }
 
     @Published var optionValues: [String: Bool] = [:]
 
@@ -45,7 +49,44 @@ final class AppViewModel: ObservableObject {
     @Published var statusText: String = "拖入文件或点「选择文件」，再挑一个操作。"
 
     private let backend: BackendClient
-    init(backend: BackendClient = BackendClient()) { self.backend = backend }
+    static let portablePreferenceKeys = ["dockit.lastOperation", "dockit.targetFormats"]
+    private let preferences: UserDefaults?
+    private var restoringPreferences = false
+    private var preferencesLoaded = false
+    private var pendingPreferenceRestore = false
+
+    init(backend: BackendClient = BackendClient(), preferences: UserDefaults? = nil) {
+        self.backend = backend
+        self.preferences = preferences ?? Self.runtimePreferences
+    }
+
+    private static var runtimePreferences: UserDefaults? {
+        let environment = ProcessInfo.processInfo.environment
+        guard Bundle.main.bundleIdentifier == "io.github.zengtianli.DocTools",
+              !CommandLine.arguments.contains("--ui-self-test"),
+              environment["DOCKIT_BACKGROUND"] != "1", environment["DOCKIT_DEMO_OP"] == nil else { return nil }
+        return .standard
+    }
+
+    func reloadPortablePreferences() {
+        guard let preferences else { return }
+        pendingPreferenceRestore = true
+        guard !isRunning, !isLoadingOps, !ops.isEmpty else { return }
+        restoringPreferences = true
+        defer { restoringPreferences = false; pendingPreferenceRestore = false }
+        if let operation = preferences.string(forKey: Self.portablePreferenceKeys[0]),
+           ops.contains(where: { $0.id == operation }) { selectedOpID = operation }
+        syncTargetDefault()
+        resetOptionsToDefaults()
+    }
+
+    private func rememberTarget() {
+        guard !restoringPreferences, let preferences, let op = selectedOp, op.needsTarget,
+              let target = selectedTargetID, op.targets.contains(where: { $0.id == target }) else { return }
+        var formats = preferences.dictionary(forKey: Self.portablePreferenceKeys[1]) as? [String: String] ?? [:]
+        formats[op.id] = target
+        preferences.set(formats, forKey: Self.portablePreferenceKeys[1])
+    }
 
     var selectedOp: DocOp? { ops.first { $0.id == selectedOpID } }
 
@@ -63,11 +104,17 @@ final class AppViewModel: ObservableObject {
     func loadOps() async {
         guard !isRunning, !isLoadingOps else { return }
         isLoadingOps = true
-        defer { isLoadingOps = false }
+        defer {
+            isLoadingOps = false
+            if !preferencesLoaded || pendingPreferenceRestore {
+                reloadPortablePreferences()
+                preferencesLoaded = true
+            }
+        }
         do {
             let r = try await backend.ops()
             ops = r.ops
-            if selectedOpID == nil { selectedOpID = ops.first?.id }
+            if !ops.contains(where: { $0.id == selectedOpID }) { selectedOpID = ops.first?.id }
             syncTargetDefault()
             if banner?.kind == .error { banner = nil }
             statusText = "已就绪 · 共 \(ops.count) 个操作。拖入文件开始。"
@@ -82,6 +129,10 @@ final class AppViewModel: ObservableObject {
         results = []; lastLog = ""; summary = ""
         syncTargetDefault()
         resetOptionsToDefaults()
+        if !restoringPreferences, let op = selectedOp {
+            preferences?.set(op.id, forKey: Self.portablePreferenceKeys[0])
+            rememberTarget()
+        }
     }
 
     func resetOptionsToDefaults() {
@@ -108,9 +159,13 @@ final class AppViewModel: ObservableObject {
 
     private func syncTargetDefault() {
         guard let op = selectedOp, op.needsTarget else { selectedTargetID = nil; return }
-        if selectedTargetID == nil || !op.targets.contains(where: { $0.id == selectedTargetID }) {
-            selectedTargetID = op.targets.first?.id
-        }
+        let saved = (preferences?.dictionary(forKey: Self.portablePreferenceKeys[1]) as? [String: String])?[op.id]
+        let target = saved.flatMap { id in op.targets.contains(where: { $0.id == id }) ? id : nil }
+            ?? (op.targets.contains(where: { $0.id == selectedTargetID }) ? selectedTargetID : op.targets.first?.id)
+        let wasRestoring = restoringPreferences
+        restoringPreferences = true
+        selectedTargetID = target
+        restoringPreferences = wasRestoring
     }
 
 

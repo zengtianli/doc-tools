@@ -1,5 +1,7 @@
 # DocKit
 
+The app menu offers configuration import/export, optional iCloud sync (off by default), and update checks. It remembers the last operation and target formats; rule toggles, file paths, documents and task history are excluded. Update checks query this product's GitHub releases without sending document content.
+
 [中文](README.md) | **English**
 
 Local document tools for Mac: standardize Chinese quotation marks, clean up punctuation and units, convert formats, and split or merge files. Originals are preserved, and results are listed for each file.

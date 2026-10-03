@@ -4,7 +4,8 @@
 #   文件内容在本机处理，应用不要求登录、不含遥测上传；日常本地操作可离线完成；
 #   结果写入「DocKit 输出」，源文件不会被覆盖。
 # Layers:
-#   1 static   : no network client code in shipped Swift/Python sources (repo + app bundle copy)
+#   1 static   : no network client code in document UI/engines; shared lifecycle modules handle
+#                explicit GitHub update checks and optional iCloud preference sync separately
 #   2 dynamic  : real gui-run ops with Python networking blocked by an audit hook (parent AND
 #                subprocess engines), zero connection/DNS attempts; optional sandbox-exec layer
 #                denying network* and file writes outside the scratch dir
@@ -30,12 +31,15 @@ static_hits=()
 scan_dir() { # <label> <swift-glob-dir or ""> <py-dir>
   local label=$1 sdir=$2 pdir=$3 out
   if [ -n "$sdir" ]; then
-    out=$(grep -nE "$SWIFT_NET" "$sdir"/*.swift || true)
+    # The two vendored lifecycle modules own update metadata/download requests. The document
+    # models/backends do not receive them or expose input paths/content to those modules.
+    # Keep every other Swift file (including AppConfiguration.swift) in the strict scan.
+    out=$(grep -nE "$SWIFT_NET" "$sdir"/*.swift | grep -vE '/AppLifecycle(UI)?\.swift:' || true)
     [ -z "$out" ] || static_hits+=("$label swift-net: $out")
     # Only allowed Swift URL literal: Help menu Link(“DocKit 使用教程”) in DocToolsApp.swift.
     # It is a SwiftUI Link — the system opens it in the user's browser only when clicked; the
     # app itself makes no request and sends no document data.
-    out=$(grep -nE 'https?://' "$sdir"/*.swift | grep -vE "$URL_ALLOW" \
+    out=$(grep -nE 'https?://' "$sdir"/*.swift | grep -vE '/AppLifecycle(UI)?\.swift:' | grep -vE "$URL_ALLOW" \
           | grep -vE 'DocToolsApp\.swift:[0-9]+: *Link\("DocKit 使用教程", destination: URL\(string: "https://app-mac-doctools\.tianli\.cyou/#install"\)!\)' || true)
     [ -z "$out" ] || static_hits+=("$label swift-url: $out")
   fi
@@ -54,7 +58,7 @@ if [ ${#static_hits[@]} -gt 0 ]; then printf '%s\n' "${static_hits[@]}"; fail "�
 py_files=$(ls "$REPO"/backend/*.py "$BUNDLE_BACKEND_DIR"/*.py | wc -l | tr -d ' ')
 swift_files=$(ls "$REPO"/Sources/*.swift | wc -l | tr -d ' ')
 bundle_drift=$( (diff -rq -x __pycache__ "$REPO/backend" "$BUNDLE_BACKEND_DIR" || true) | wc -l | tr -d ' ')
-echo "static: OK ($swift_files swift, $py_files py; 仅放行帮助菜单 Link 与 XML 命名空间; repo/包内后端差异 $bundle_drift 项)"
+echo "static: OK ($swift_files swift, $py_files py; 文档模块仅放行帮助菜单 Link 与 XML 命名空间；共享生命周期模块负责手动更新与可选配置同步; repo/包内后端差异 $bundle_drift 项)"
 
 # ───────────────────────── 2+3. dynamic run with network guard
 IN="$WORK/in"; OUT="$WORK/out"; FAKE_HOME="$WORK/home"; TMPD="$WORK/tmp"; GUARD="$WORK/guard"

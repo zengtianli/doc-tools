@@ -2,6 +2,8 @@
 
 **中文** | [English](README_EN.md)
 
+App 菜单提供「配置与更新…」和「检查更新…」。记住上次操作与各操作的目标格式，支持导入、导出和可选择开启的 iCloud 配置同步（默认关闭）；勾选规则、文件路径、文档与任务记录不参与同步。检查更新只访问本产品的 GitHub 发行信息，不发送文档内容。
+
 Mac 上的本地文档工具：统一中文引号、整理标点与单位、转换格式、拆分和合并文件。原件保留，结果逐份列出。
 
 **[产品主页与安装教程](https://app-mac-doctools.tianli.cyou/)** · [下载最新版](https://github.com/zengtianli/doc-tools/releases/latest) · [反馈问题](https://github.com/zengtianli/doc-tools/issues)

@@ -116,6 +116,9 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .consoleRefresh)) { _ in
             Task { await vm.loadOps() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .dockitPreferencesChanged)) { _ in
+            vm.reloadPortablePreferences()
+        }
         .toolbar {
             ToolbarItemGroup {
                 Button { vm.clearFiles() } label: {
