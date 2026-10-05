@@ -104,7 +104,15 @@ page=(ROOT/"site/index.html").read_text()
 for key,value in replacements.items(): page=page.replace("{{"+key+"}}",value)
 if "{{" in page: raise SystemExit("Unresolved website placeholders")
 (out/"index.html").write_text(page)
-product_facts.write(out,product_facts.from_repo(ROOT,product_id="doc-tools",icon="images/icon.png"))
+facts=product_facts.from_repo(ROOT,product_id="doc-tools",icon="images/icon.png")
+facts["measurement_version"]=measured_build
+if measured_build!=released_build:
+    facts["measurement_scope"]="local acceptance build"
+    facts["release_download_bytes"]=release["bytes"]
+    facts["card_line"]=facts["card_line"].replace("<p class='collection-perf'>",
+                        "<p class='collection-perf'>本地验收构建 "+html.escape(measured_build)+" 实测 · ",1)
+    facts["card_text"]=product_facts.card_text(facts["card_line"])
+product_facts.write(out,facts)
 files=[{"path":str(p.relative_to(out)),"sha256":hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(out.rglob("*")) if p.is_file()]
 (out/"site-manifest.json").write_text(json.dumps({"product":"DocKit","version":release["version"],"preview":a.preview,"files":files},ensure_ascii=False,indent=2)+"\n")
 print(out)

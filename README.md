@@ -20,6 +20,8 @@ SwiftUI 界面；文档处理靠包内 Python 3.12，只在启动读操作列表
 <sub>v1.1.3 (39) · Mac16,12 / Apple M4 / macOS 27.2 · 静默只读加载包内真实操作目录并离屏绘制初始界面；输入文件为空，不处理文档，不写本人偏好。 · 2026-10-05。数字来自所列设备实测，版本更新后重新测量。内存口径为 phys_footprint；CPU 为 60 秒采样窗内 CPU 时间 ÷ 墙钟；大小按十进制 MB。原始数据见 [perf/lightweight.json](perf/lightweight.json)。</sub>
 <!-- lightweight:end -->
 
+以上是本地验收构建 **1.1.3 (39)** 的实测，公开下载仍为 **1.1.3 (37)**；两份构建分别标注，不把本地样本当作已发布包的性能。
+
 ## 安装
 
 需要 **macOS 15 或更高版本、Apple Silicon Mac**。下载 `DocKit-v1.1.1-arm64.zip`，解压后把 `DocKit.app` 拖入「应用程序」。公开版 bundle ID 保持 `io.github.zengtianli.DocTools`，源码仓仍叫 doc-tools。

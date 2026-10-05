@@ -20,6 +20,8 @@ SwiftUI interface; document work runs in the bundled Python 3.12, started as a s
 <sub>v1.1.3 (39) · Mac16,12 / Apple M4 / macOS 27.2 · measured 2026-10-05. Measured on the listed device; re-measured for each version. Memory uses phys_footprint; CPU is CPU time ÷ wall time over a 60-second sampling window; sizes in decimal MB. Raw data: [perf/lightweight.json](perf/lightweight.json).</sub>
 <!-- lightweight:end -->
 
+These measurements describe local acceptance build **1.1.3 (39)**. The public download remains **1.1.3 (37)**; the local samples are not measurements of that published package.
+
 ## Installation
 
 Requires **macOS 15 or later and an Apple Silicon Mac**. Download `DocKit-v1.1.1-arm64.zip`, extract it, and drag `DocKit.app` into Applications. The public bundle ID remains `io.github.zengtianli.DocTools`; the source repository is still named doc-tools.
