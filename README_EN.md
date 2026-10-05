@@ -24,7 +24,7 @@ These measurements describe local acceptance build **1.1.3 (39)**. The public do
 
 ## Installation
 
-Requires **macOS 15 or later and an Apple Silicon Mac**. Download `DocKit-v1.1.1-arm64.zip`, extract it, and drag `DocKit.app` into Applications. The public bundle ID remains `io.github.zengtianli.DocTools`; the source repository is still named doc-tools.
+Requires **macOS 15 or later and an Apple Silicon Mac**. Download `DocKit-v1.1.3-arm64.zip`, extract it, and drag `DocKit.app` into Applications. The public bundle ID remains `io.github.zengtianli.DocTools`; the source repository is still named doc-tools.
 
 The release includes Python and document dependencies. Common operations require no uv, Python, or Office installation and no account; file contents are processed locally. The app has no background document process and starts the engine only while running a task.
 
