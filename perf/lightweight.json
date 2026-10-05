@@ -1,13 +1,14 @@
 {
   "product": "DocKit",
-  "version": "1.1.2 (31)",
-  "measured_at": "2026-09-29",
+  "version": "1.1.3 (39)",
+  "measured_at": "2026-10-05",
   "device": "Mac16,12 / Apple M4 / macOS 27.2",
   "size": {
-    "download_bytes": 44698421,
-    "download_mb": 42.63,
-    "installed_bytes": 132464640,
-    "installed_mb": 126.33
+    "download_bytes": 44815143,
+    "download_mb": 42.74,
+    "installed_bytes": 132718592,
+    "installed_mb": 126.57,
+    "download_file": "DocKit-v1.1.3-arm64.zip"
   },
   "compare": [],
   "speed_ops": [
@@ -125,7 +126,7 @@
       "perf/raw/v1.1.1-package-verification.json"
     ]
   },
-  "env_note": "2026-09-29 主会话逐个顺序测量，负载均值 2.79 3.61 6.21；total = 6144.00M  used = 5288.38M  free = 855.62M（开始时）；启动时间受负载影响，内存与 CPU 为进程自身数值",
+  "env_note": "2026-10-05 主会话逐个顺序测量，负载均值 2.77 3.59 4.38；total = 6144.00M  used = 4653.69M  free = 1490.31M（开始时）；启动时间受负载影响，内存与 CPU 为进程自身数值",
   "why": "SwiftUI 界面；文档处理靠包内 Python 3.12，只在启动读操作列表和点「执行」时起子进程、做完即退出，空闲只剩界面进程。运行时只带各项操作实际用到的部分：docx 转 Markdown 用约 140 行的内容识别代替 magika 与 onnxruntime 模型运行时，去掉各库测试目录和用不到的标准库，二进制去掉调试符号；各项操作用到的模块预编译成字节码，不再每次从源码编译。",
   "why_en": "SwiftUI interface; document work runs in the bundled Python 3.12, started as a subprocess only to read the operation list at launch and when you click Run, and it exits when done, so only the UI process remains while idle. The runtime ships only what the operations use: a ~140-line content sniffer replaces magika and the onnxruntime model runtime for docx to Markdown, library test folders and unused standard-library parts are removed, binaries are stripped, and the modules the operations import are precompiled so nothing is recompiled from source on each run.",
   "history": [
@@ -569,43 +570,138 @@
         "method": "open -g -j 后台启动，静置 45 秒后 measure.py idle <PID> --seconds 60 --with-helpers：内存为主进程 + WebKit/XPC 辅助进程 + 子进程同一时刻 phys_footprint 之和的峰值（活动监视器「内存」列同口径），CPU 为这些进程窗口内 CPU 时间增量之和 ÷ 墙钟",
         "load": "负载均值 7.92 10.32 46.27；total = 5120.00M  used = 4574.12M  free = 545.88M"
       }
+    },
+    {
+      "section": "version",
+      "replaced_on": "2026-10-05",
+      "reason": "装机：安装了轻量化后的新构建",
+      "value": "1.1.2 (31)"
+    },
+    {
+      "section": "idle",
+      "version": "1.1.2 (31)",
+      "replaced_on": "2026-10-05",
+      "reason": "版本变化；仅本次实测可作为当前证据",
+      "value": {
+        "process": "~/Apps/oss/doc-tools-oss/build/perf-run/DocKit.app",
+        "footprint_mb": 47.0,
+        "main_footprint_mb": 47.0,
+        "cpu_pct": 0.0,
+        "main_cpu_pct": 0.0,
+        "processes": [
+          {
+            "name": "main",
+            "cpu_pct": 0.0,
+            "footprint_peak_mb": 47.0
+          }
+        ],
+        "window_s": 60,
+        "settle_s": 45,
+        "measured_at": "2026-09-29",
+        "method": "open -g -j 后台启动，静置 45 秒后 measure.py idle <PID> --seconds 60 --with-helpers：内存为主进程 + WebKit/XPC 辅助进程 + 子进程同一时刻 phys_footprint 之和的峰值（活动监视器「内存」列同口径），CPU 为这些进程窗口内 CPU 时间增量之和 ÷ 墙钟",
+        "load": "负载均值 4.60 4.41 6.19；total = 6144.00M  used = 5272.38M  free = 871.62M"
+      }
+    },
+    {
+      "section": "speed_gui",
+      "version": "1.1.2 (31)",
+      "replaced_on": "2026-10-05",
+      "reason": "版本变化；仅本次实测可作为当前证据",
+      "value": [
+        {
+          "key": "cold_launch_to_window",
+          "label": "冷启动到窗口出现",
+          "median_ms": 385,
+          "runs": 5,
+          "headline": true,
+          "raw_ms": [
+            423,
+            378,
+            387,
+            377,
+            385
+          ],
+          "method": "open -g -j 后台隐藏启动，被动读取窗口列表直到主窗口出现；不点击、不激活；5 次取中位",
+          "load": "负载均值 3.35 3.71 6.21；total = 6144.00M  used = 5280.38M  free = 863.62M"
+        }
+      ]
+    },
+    {
+      "section": "size",
+      "version": "1.1.2 (31)",
+      "replaced_on": "2026-10-05",
+      "reason": "版本变化；旧安装包大小不沿用",
+      "value": {
+        "download_bytes": 44698421,
+        "download_mb": 42.63,
+        "installed_bytes": 132464640,
+        "installed_mb": 126.33
+      }
     }
   ],
+  "measured_artifact": {
+    "version": "1.1.3",
+    "build": "39",
+    "executable_sha256": "917ea399e40406db6521b6b8cba4b1afdecc62ca1494ea2009328cc0124bf271"
+  },
+  "speed": {
+    "cold_launch_ms": 665.0,
+    "runs": 5,
+    "ready_signal": "os_log",
+    "raw_ms": [
+      812.0,
+      665.0,
+      691.0,
+      565.0,
+      555.0
+    ],
+    "method": "sim_lane.run_mac_quiet：LSUIElement 隔离副本；open -g -j -n -> App os_log lane-ready（首屏数据与布局完成）；5 次中位数"
+  },
   "speed_gui": [
     {
-      "key": "cold_launch_to_window",
-      "label": "冷启动到窗口出现",
-      "median_ms": 385,
+      "key": "cold_launch_to_ready",
+      "label": "冷启动到首屏就绪",
+      "median_ms": 665.0,
       "runs": 5,
+      "ready_signal": "os_log",
       "headline": true,
       "raw_ms": [
-        423,
-        378,
-        387,
-        377,
-        385
+        812.0,
+        665.0,
+        691.0,
+        565.0,
+        555.0
       ],
-      "method": "open -g -j 后台隐藏启动，被动读取窗口列表直到主窗口出现；不点击、不激活；5 次取中位",
-      "load": "负载均值 3.35 3.71 6.21；total = 6144.00M  used = 5280.38M  free = 863.62M"
+      "method": "sim_lane.run_mac_quiet：LSUIElement 隔离副本；open -g -j -n -> App os_log lane-ready（首屏数据与布局完成）；5 次中位数"
     }
   ],
   "idle": {
-    "process": "~/Apps/oss/doc-tools-oss/build/perf-run/DocKit.app",
-    "footprint_mb": 47.0,
-    "main_footprint_mb": 47.0,
+    "process": "/private/var/folders/x7/qptxw08j00v__67yzr3gcd000000gp/T/sim-lane-mac.cfd89mlj/DocKit Public.app",
+    "footprint_mb": 48.0,
+    "main_footprint_mb": 48.0,
     "cpu_pct": 0.0,
     "main_cpu_pct": 0.0,
     "processes": [
       {
         "name": "main",
         "cpu_pct": 0.0,
-        "footprint_peak_mb": 47.0
+        "footprint_peak_mb": 48.0
       }
     ],
     "window_s": 60,
     "settle_s": 45,
-    "measured_at": "2026-09-29",
-    "method": "open -g -j 后台启动，静置 45 秒后 measure.py idle <PID> --seconds 60 --with-helpers：内存为主进程 + WebKit/XPC 辅助进程 + 子进程同一时刻 phys_footprint 之和的峰值（活动监视器「内存」列同口径），CPU 为这些进程窗口内 CPU 时间增量之和 ÷ 墙钟",
-    "load": "负载均值 4.60 4.41 6.19；total = 6144.00M  used = 5272.38M  free = 871.62M"
+    "measured_at": "2026-10-05",
+    "method": "App os_log 首屏就绪后，LSUIElement 隔离副本静置 45 秒； measure.py idle <PID> --seconds 60 --with-helpers：内存为主进程 + WebKit/XPC 辅助进程 + 子进程同一时刻 phys_footprint 之和的峰值（活动监视器「内存」列同口径），CPU 为这些进程窗口内 CPU 时间增量之和 ÷ 墙钟",
+    "load": "负载均值 1.81 3.00 4.01；total = 6144.00M  used = 4653.69M  free = 1490.31M",
+    "owner_idle_s_at_start": 1015
+  },
+  "input_sha256": "09f804e3e453048c55333889ec1455d038de5733b95e40444fa9ceed1202bd04",
+  "data": "静默只读加载包内真实操作目录并离屏绘制初始界面；输入文件为空，不处理文档，不写本人偏好。",
+  "runtime_measurement": {
+    "environment": "native",
+    "evidence": "/Users/tianli/Library/Caches/app-lightweight/measurement-candidates/fdf75cfec4404a2d98d892192b56f1d0.raw.json",
+    "evidence_sha256": "626f06ae67ae7414b13c5ba091e07460636fc1acd29dc5ae39bd1ba1200ab9c8",
+    "input_sha256": "09f804e3e453048c55333889ec1455d038de5733b95e40444fa9ceed1202bd04",
+    "ready_signal": "os_log"
   }
 }
