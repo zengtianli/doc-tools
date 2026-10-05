@@ -11,13 +11,13 @@ Local document tools for Mac: standardize Chinese quotation marks, clean up punc
 <!-- lightweight:start -->
 ## Resource use
 
-| Download | Idle memory | Idle CPU | Cold launch to window |
+| Download | Idle memory | Idle CPU | Speed |
 |---|---|---|---|
-| **44.7 MB** (installed 132 MB) | **49.3 MB** | **0%** | **385 ms** |
+| **44.8 MB** (installed 133 MB) | **50.3 MB** | **0%** | **665 ms** |
 
 SwiftUI interface; document work runs in the bundled Python 3.12, started as a subprocess only to read the operation list at launch and when you click Run, and it exits when done, so only the UI process remains while idle. The runtime ships only what the operations use: a ~140-line content sniffer replaces magika and the onnxruntime model runtime for docx to Markdown, library test folders and unused standard-library parts are removed, binaries are stripped, and the modules the operations import are precompiled so nothing is recompiled from source on each run.
 
-<sub>v1.1.2 (31) · Mac16,12 / Apple M4 / macOS 27.2 · measured 2026-09-29. Measured on the listed device; re-measured for each version. Memory uses phys_footprint; CPU is CPU time ÷ wall time over a 60-second sampling window; sizes in decimal MB. Raw data: [perf/lightweight.json](perf/lightweight.json).</sub>
+<sub>v1.1.3 (39) · Mac16,12 / Apple M4 / macOS 27.2 · measured 2026-10-05. Measured on the listed device; re-measured for each version. Memory uses phys_footprint; CPU is CPU time ÷ wall time over a 60-second sampling window; sizes in decimal MB. Raw data: [perf/lightweight.json](perf/lightweight.json).</sub>
 <!-- lightweight:end -->
 
 ## Installation
