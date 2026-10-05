@@ -89,6 +89,13 @@ if (media/"tutorial.mp4").is_file():
 measured_version=json.loads((ROOT/"perf/lightweight.json").read_text())["version"].split(" ")[0]
 historical=measured_version!=release["version"] and os.environ.get("APP_RELEASE_KEEP_HISTORY")=="1"
 block=perf_block.standalone_section(ROOT/"perf/lightweight.json",measured_version if historical else release["version"],"#167e6d")
+measured_build=json.loads((ROOT/"perf/lightweight.json").read_text())["version"]
+released_build=f"{release['version']} ({release['build']})"
+if measured_build!=released_build and not historical:
+    block=block.replace("<div class='perf-grid'>",
+                        "<p class='fine'>本地验收构建 "+html.escape(measured_build)+
+                        " 的实测；公开下载仍为 "+html.escape(released_build)+
+                        "，下列数据不代表已发布包。</p><div class='perf-grid'>",1)
 if historical:
     block=block.replace("资源占用与响应速度。",f"历史实测 · v{measured_version}。").replace("数字来自所列设备实测，版本更新后重新测量。",f"以下为 v{measured_version} 的历史实测，不代表当前 v{release['version']}；本轮未重复采样。")
 replacements={"VERSION":release["version"],"FILENAME":archive.name,"DOWNLOAD":"downloads/"+archive.name,

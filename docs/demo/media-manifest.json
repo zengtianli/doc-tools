@@ -342,10 +342,24 @@
     "1.1.3": {
       "build": "37",
       "release_sha256": "64099e4ffd445c1185aaa5f7db89f9524a9d01105f8f3893cbba56dd1310b6ee",
-      "ui_sources_sha256": "8e7063f459e5bf1fa3de0cf63d4a5798c24e3cbf941049bc8e2560e5976242e2",
-      "ui_changes": "新增单独的配置与更新窗口及操作/格式偏好恢复；旧录像只展示引号处理、格式转换与结果列表，不覆盖新配置窗口。原视频字节、录制版本和来源保留。",
-      "reason": "本轮按增量升级保留原实机媒体，作为已标明旧版本的原有工作流演示；当前实际冻结包的原生离屏主视图、palette、转换选择、虚构文件处理与结果绘制已运行，后台业务与偏好检查通过。录像不代表新版性能。",
-      "checked": "2026-10-04"
+      "ui_sources_sha256": "c94701f9922b44f552bc0192b115fe01fa9e20eb9392312dcd9c7b2da40a2040",
+      "ui_source_history": [
+        {
+          "checked": "2026-10-04",
+          "ui_sources_sha256": "8e7063f459e5bf1fa3de0cf63d4a5798c24e3cbf941049bc8e2560e5976242e2"
+        }
+      ],
+      "ui_changes": "新增单独的配置与更新窗口及操作/格式偏好恢复；旧录像只展示引号处理、格式转换与结果列表，不覆盖新配置窗口。2026-10-05 本地 build 39 只新增显式 -lane_quiet 的只读离屏测量支路及默认 true 的原流程参数，正常主视图与处理交互未变。原视频字节、录制版本和来源保留。",
+      "reason": "沿用已标明旧版本的原有工作流演示。当前 Sources 的原生离屏主视图、palette、转换选择、虚构文件处理与结果绘制固定自检 25/25 通过，后台业务与偏好检查通过。公开下载仍为 build 37；录像不代表本地 build 39 的性能。",
+      "local_ui_validation": {
+        "version": "1.1.3",
+        "build": "39",
+        "check": "native_ui",
+        "input_sha256": "503a19eb903bc2f381e48ac3ece3384afe4dcbbf45e42c3664cf6e2681bddbeb",
+        "evidence": "perf/acceptance/native_ui.json",
+        "summary": "25/25 passed; 5 offscreen snapshots; normal view task, palette and document workflow"
+      },
+      "checked": "2026-10-05"
     }
   }
 }
