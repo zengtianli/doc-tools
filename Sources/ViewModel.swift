@@ -55,9 +55,10 @@ final class AppViewModel: ObservableObject {
     private var preferencesLoaded = false
     private var pendingPreferenceRestore = false
 
-    init(backend: BackendClient = BackendClient(), preferences: UserDefaults? = nil) {
+    init(backend: BackendClient = BackendClient(), preferences: UserDefaults? = nil,
+         usesPortablePreferences: Bool = true) {
         self.backend = backend
-        self.preferences = preferences ?? Self.runtimePreferences
+        self.preferences = usesPortablePreferences ? (preferences ?? Self.runtimePreferences) : nil
     }
 
     private static var runtimePreferences: UserDefaults? {

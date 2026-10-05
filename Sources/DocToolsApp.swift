@@ -155,11 +155,47 @@ final class DocKitAppDelegate: NSObject, NSApplicationDelegate {
 // launch goes straight to the SwiftUI App exactly as before.
 @main
 enum DocKitMain {
-    static func main() {
+    @MainActor static func main() {
+        if LaneSignal.quiet {
+            quietMain()
+            return
+        }
         if CommandLine.arguments.contains("--ui-self-test") {
             UISelfTest.runAndExit()
         }
         DocToolsApp.main()
+    }
+
+    @MainActor private static func quietMain() {
+        let application = NSApplication.shared
+        application.setActivationPolicy(.accessory)
+        LaneSignal.enterQuietIfAsked()
+        let model = AppViewModel(usesPortablePreferences: false)
+        let window = NSWindow(contentRect: NSRect(x: -10000, y: -10000, width: 1060, height: 760),
+                              styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        let view = NSHostingView(rootView: ContentView(vm: model, autoLoad: false))
+        window.contentView = view
+        let timeout = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { _ in NSApp.terminate(nil) }
+        Task { @MainActor in
+            await model.loadOps()
+            guard !model.ops.isEmpty, model.banner?.kind != .error else {
+                NSApp.terminate(nil)
+                return
+            }
+            DispatchQueue.main.async {
+                view.layoutSubtreeIfNeeded()
+                guard let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else {
+                    NSApp.terminate(nil)
+                    return
+                }
+                view.cacheDisplay(in: view.bounds, to: bitmap)
+                timeout.invalidate()
+                LaneSignal.ready("main")
+            }
+        }
+        application.run()
+        withExtendedLifetime(window) {}
     }
 }
 

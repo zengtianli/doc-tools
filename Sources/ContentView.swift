@@ -64,10 +64,12 @@ struct ContentView: View {
     @State private var showPalette = false   // ⌘K 命令面板浮层开关
     /// Self-test hook only (UISelfTest): observes palette visibility; nil in the app.
     private let paletteObserver: ((Bool) -> Void)?
+    private let autoLoad: Bool
 
-    init(vm: AppViewModel? = nil, paletteObserver: ((Bool) -> Void)? = nil) {
+    init(vm: AppViewModel? = nil, paletteObserver: ((Bool) -> Void)? = nil, autoLoad: Bool = true) {
         _vm = StateObject(wrappedValue: vm ?? AppViewModel())
         self.paletteObserver = paletteObserver
+        self.autoLoad = autoLoad
     }
 
     var body: some View {
@@ -102,6 +104,7 @@ struct ContentView: View {
             DetailView(vm: vm)
         }
         .task {
+            guard autoLoad else { return }
             await vm.loadOps()
             let env = ProcessInfo.processInfo.environment
             if let op = env["DOCKIT_DEMO_OP"], vm.ops.contains(where: { $0.id == op }) {
