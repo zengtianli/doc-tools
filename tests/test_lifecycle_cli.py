@@ -35,6 +35,7 @@ import time
 import unittest
 import uuid
 
+ROOT = Path(__file__).resolve().parents[1]
 TEST_APP = os.environ.get('DOCKIT_TEST_APP')
 BUNDLE = 'io.github.zengtianli.DocTools.LifecycleTest'
 PRODUCT = 'io.github.zengtianli.DocTools'
@@ -183,6 +184,16 @@ class CommandWordTests(unittest.TestCase):
         named = self.dockit('help', env=dict(self.env, DOCKIT_CLI_NAME='dockit public')).stdout
         self.assertIn('usage: dockit public <command>', named)
         self.assertIn('用 dockit public config status 回读', named)
+
+    def test_info_plist_lists_exactly_the_words_the_executable_answers(self):
+        """Info.plist's DocKitCommandVerbs is what a wrapper reads before forwarding a word (a word the build
+        does not know would open the window). Every listed word must be answered without one."""
+        listed = plistlib.loads((ROOT / 'Info.plist').read_bytes())['DocKitCommandVerbs']
+        self.assertEqual(sorted(listed), ['config', 'help', 'settings', 'status', 'update'])
+        for word in listed:
+            done = self.dockit(word, '--help')
+            self.assertEqual((done.returncode, done.stderr), (0, ''), word)
+            self.assertIn('usage: DocTools ', done.stdout, word)
 
     # ── status and settings
 
@@ -456,6 +467,8 @@ class AssembledBundleTests(unittest.TestCase):
         self.assertEqual((status.returncode, body['ok'], body['command']), (0, True, 'status'))
         self.assertEqual((body['app']['version'], body['app']['build'], body['app']['bundle_id']),
                          (self.info['CFBundleShortVersionString'], self.info['CFBundleVersion'], self.info['CFBundleIdentifier']))
+        # The words a wrapper may forward to this bundle are declared in its Info.plist.
+        self.assertEqual(sorted(self.info['DocKitCommandVerbs']), ['config', 'help', 'settings', 'status', 'update'])
         self.assertEqual((body['engine']['ready'], body['engine']['operations'], body['settings']),
                          (True, 9, {'last_operation': None, 'target_formats': {}}))
         config = json.loads(self.run_words('config', 'status', '--json').stdout)
