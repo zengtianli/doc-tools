@@ -156,7 +156,7 @@ final class DocKitAppDelegate: NSObject, NSApplicationDelegate {
 @main
 enum DocKitMain {
     @MainActor static func main() {
-        // Command words (DocKitCLI.swift): `status`, `settings`, `config …`, `update check`, `help`.
+        // Command words (DocKitCLI.swift): `status`, `settings`, `config …`, `update check | install`, `help`.
         // Answered here, before any NSApplication exists — no window, no Dock icon, no focus change.
         let words = Array(CommandLine.arguments.dropFirst())
         if DocKitCLI.handles(words.first) { exit(DocKitCLI.run(words)) }

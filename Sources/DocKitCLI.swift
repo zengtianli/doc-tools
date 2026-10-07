@@ -8,7 +8,7 @@ import SwiftUI
 //   DocKit.app/Contents/MacOS/DocTools settings [--json]
 //   DocKit.app/Contents/MacOS/DocTools settings set <key> <value> [--json]
 //   DocKit.app/Contents/MacOS/DocTools config status | export | import | sync
-//   DocKit.app/Contents/MacOS/DocTools update check
+//   DocKit.app/Contents/MacOS/DocTools update check | install
 //   DocKit.app/Contents/MacOS/DocTools help
 //
 // The window is for a person; these words let a script or an agent read and
@@ -20,9 +20,12 @@ import SwiftUI
 //     window uses, so its sentence is the window's status line.
 //   · `settings` reads and writes the two preference keys the window
 //     remembers (AppViewModel.portablePreferenceKeys), nothing else.
-//   · `config` and `update` are the five items of the「配置与更新…」window,
-//     run by the shared layer (AppLifecycleCLI.swift) on the configuration
-//     and update source built by `Lifecycle` below — the window's own.
+//   · `config` and `update` are the items of the「配置与更新…」window — the
+//     iCloud switch and the sync status sentence under it, export, import,
+//     check for updates, upgrade — run by the shared layer
+//     (AppLifecycleCLI.swift) on the configuration and update source built
+//     by `Lifecycle` below — the window's own. `update install --yes` is the
+//     window's「升级到新版…」: the same installer, nothing silent.
 // =============================================================================
 
 /// One factory for what the「配置与更新…」window and the `config` / `update` words work on.
@@ -103,7 +106,7 @@ enum DocKitCLI {
         """
         usage: \(name) <command> [--json]
         DocKit 的命令入口：不打开窗口、不进 Dock、不抢焦点，与窗口读写同一份设置。已在运行的 DocKit 不受打扰。
-        处理文档仍在窗口里做；这里是版本、状态、记住的设置，以及「\(AppLifecycleCLI.defaultWindowEntry)」窗口里的几项。
+        处理文档仍在窗口里做；这里是版本、状态、记住的设置，以及「\(AppLifecycleCLI.defaultWindowEntry)」窗口里的各项。
 
         读命令（不写任何文件或状态）:
           status                     版本与构建号、状态行（已就绪 / 文档引擎未就绪）、记住的上次操作与各操作的目标格式、窗口是否在运行
@@ -126,11 +129,11 @@ enum DocKitCLI {
           0  成功（status 读到「文档引擎未就绪」也算成功，看 engine.ready）
           1  操作未完成：engine_unavailable（文档引擎没有答复，无法核对设置值）· not_written（设置没有写进去）·
              isolation_incomplete（隔离运行缺 \(Lifecycle.suiteVariable)）；config / update 的见 \(name) config --help
+             （update install 在这个安装位置或渠道不能由命令替换时是 manual_install，带安装包地址）
           2  用法错误：usage（参数不对）· unknown_setting · unknown_operation · unknown_target；
              config / update 另有 confirmation_required、file_exists
 
         仅在窗口中：\(AppLifecycleCLI.helpWindowOnly)；选文件、拖入文件、执行操作、查看结果
-        暂无命令：\(AppLifecycleCLI.helpNoCommand)
         """
     }
 
@@ -167,7 +170,7 @@ enum DocKitCLI {
                 guard positionals.count == 3 else { throw Failure.usage("用法：\(name) settings set last_operation <op> | target_formats.<op> <目标>") }
                 (body, text) = try set(positionals[1], positionals[2], store)
             default:
-                throw Failure.usage("用法：\(name) status | settings | settings set <键> <值> | config … | update check（都可加 --json；\(name) help 看全部）")
+                throw Failure.usage("用法：\(name) status | settings | settings set <键> <值> | config … | update check | update install（都可加 --json；\(name) help 看全部）")
             }
             if json {
                 var out = body

@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# lifecycle: the command words of the app executable (status, settings, config …, update check), end to end
+# lifecycle: the command words of the app executable (status, settings, config …, update check | install), end to end
 # and off screen — tests/test_lifecycle_cli.py.
 #
 # Compiles Sources/*.swift into a temporary .app with a test bundle identifier whose Resources symlink to the
 # built bundle (bundled Python runtime) and the repo backend, then drives that executable as real processes:
 # as the command, and a second time as the running app (activation policy prohibited, nothing ordered in).
 # build/DocKit.app is read, never modified or rebuilt. Preferences live in a throwaway named domain that is
-# removed afterwards; support and "cloud" directories are temporary; `update check` runs with the network denied.
+# removed afterwards; support and "cloud" directories are temporary; `update check` and `update install` run with
+# the network denied (DOCKIT_TEST_ONLINE=1 adds one read of the public release record; nothing is ever installed).
 #
 #   bash scripts/accept/lifecycle.sh            compile the current sources and run every test
 #   DOCKIT_APP=/Applications/DocKit.app bash scripts/accept/lifecycle.sh
@@ -54,4 +55,4 @@ xcrun swiftc -parse-as-library -target arm64-apple-macosx15.0 Sources/*.swift -o
 # Clean env: no recording, demo or quiet-launch variables may leak into the test.
 env -u DOCKIT_BACKGROUND -u DOCKIT_DEMO_OP -u DOCKIT_DEMO_FILES -u DOCKIT_INPUT_DIR -u DOCKIT_CLI_NAME \
   DOCKIT_TEST_APP="$TAPP" python3 tests/test_lifecycle_cli.py "$@"
-echo "PASS command words: help, status, settings, config, update check; a running app follows and never writes an old value back"
+echo "PASS command words: help, status, settings, config (with the sync status sentence), update check, update install; a running app follows and never writes an old value back"

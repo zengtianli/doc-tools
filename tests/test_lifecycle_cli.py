@@ -1,25 +1,31 @@
 """DocKit's command words, end to end and off screen.
 
-The app executable answers `status`, `settings`, `config …`, `update check` and `help` itself, before any
-NSApplication exists (Sources/DocKitCLI.swift). `config` and `update` are the five items of the “配置与更新…”
-window, run by the shared layer (Sources/AppLifecycleCLI.swift) on the window's own configuration. This test
-drives the compiled executable as real processes:
+The app executable answers `status`, `settings`, `config …`, `update check`, `update install` and `help` itself,
+before any NSApplication exists (Sources/DocKitCLI.swift). `config` and `update` are the items of the
+“配置与更新…” window, run by the shared layer (Sources/AppLifecycleCLI.swift) on the window's own configuration.
+This test drives the compiled executable as real processes:
 
 1. the top-level help lists every command, the --json shapes, the exit codes and what stays in the window;
 2. `status` reports the bundle's version and build, the window's status line (ready / engine not ready) and
    the remembered settings, and writes nothing;
 3. `settings set` validates against the operation catalog, and a freshly started app selects what it wrote;
-4. `config …` reads and writes the same preferences the window's configuration does;
+4. `config …` reads and writes the same preferences the window's configuration does, and `config status`
+   carries the sync status sentence the window shows under the iCloud switch (`sync_status`);
 5. a running app follows `config sync` and `config import` typed in another process and never writes an old
    value back: the executable is started a second time as the app itself (`--lifecycle-follow-probe`: the
    production wiring, the real ContentView and the shared window, activation policy prohibited, nothing ever
    ordered in). Every verdict reads the stored values from a fresh process; two commands back to back are
-   part of it, and so is an import made while sync is on and the app is running.
+   part of it, and so is an import made while sync is on and the app is running;
+6. `update install` is the window's upgrade button as a command. This build is ad-hoc signed and its channel is
+   GitHub, so the shared installer never replaces it (the window's button is「下载新版…」): with nothing newer
+   the command exits 0 and installs nothing, with something newer it exits 1 with `manual_install` and the
+   package address. Neither case downloads or replaces anything.
 
 Everything is isolated: a throwaway bundle with a test bundle identifier, a throwaway named preferences domain,
 temporary support and "cloud" directories, a private notification channel. No window is shown, nothing reaches
-the Dock, `update check` runs with the network denied, no installed app is signalled and your own settings are
-never opened.
+the Dock, `update check` and `update install` run with the network denied, no installed app is signalled and
+your own settings are never opened. DOCKIT_TEST_ONLINE=1 adds one test that reads the public release record
+from GitHub (still on throwaway bundles; nothing is downloaded or installed).
 
     DOCKIT_TEST_APP=/path/to/Test.app python3 tests/test_lifecycle_cli.py     (scripts/accept/lifecycle.sh builds it)
     DOCKIT_APP=/path/to/DocKit.app python3 tests/test_lifecycle_cli.py AssembledBundleTests   (read commands only)
@@ -37,6 +43,7 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST_APP = os.environ.get('DOCKIT_TEST_APP')
+ONLINE = os.environ.get('DOCKIT_TEST_ONLINE') == '1'
 BUNDLE = 'io.github.zengtianli.DocTools.LifecycleTest'
 PRODUCT = 'io.github.zengtianli.DocTools'
 SANDBOX = Path('/usr/bin/sandbox-exec')
@@ -166,24 +173,35 @@ class CommandWordTests(unittest.TestCase):
         shared = self.dockit('config', '--help')
         self.assertEqual(shared.returncode, 0)
         for line in ('  status ', '  settings ', '  settings set ', '  config status ', '  update check ',
-                     '  config export ', '  config import ', '  config sync '):
+                     '  config export ', '  config import ', '  config sync ', '  update install --yes '):
             self.assertIn('\n' + line, top, line)
         # The shared layer's own lines, unchanged, reach the top-level help.
-        for line in shared.stdout.splitlines():
-            if line.startswith(('  config status', '  update check', '  config export', '  config import', '  config sync')) and '→' not in line:
-                self.assertIn('\n' + line + '\n', top)
+        own = [line for line in shared.stdout.splitlines()
+               if line.startswith(('  config status', '  update check', '  config export', '  config import', '  config sync',
+                                   '  update install')) and '→' not in line]
+        self.assertEqual(len(own), 6, own)
+        for line in own:
+            self.assertIn('\n' + line + '\n', top)
         reads, writes = top.split('读命令')[1].split('写命令')[0], top.split('写命令')[1].split('--json 输出形状')[0]
         self.assertTrue('config status' in reads and 'update check' in reads and 'settings set' not in reads and 'config export' not in reads)
-        self.assertTrue(all(word in writes for word in ('settings set', 'config export', 'config import', 'config sync')))
+        self.assertTrue('同步状态' in reads and 'update install' not in reads)   # upgrading replaces the app: a write command
+        self.assertTrue(all(word in writes for word in ('settings set', 'config export', 'config import', 'config sync',
+                                                        'update install --yes')))
         self.assertTrue('--json' in top and '退出码' in top and '"error"' in top)
-        window = top.split('仅在窗口中：')[1].split('暂无命令：')[0]
+        # Every item of the window has a command now: neither help has a「暂无命令」line, and upgrading is not window-only.
+        window = top.split('仅在窗口中：')[1]
         self.assertIn('打开「配置与更新…」窗口', window)
         self.assertNotIn('升级到新版', window)
-        self.assertIn('升级到新版', top.split('暂无命令：')[1])
+        self.assertNotIn('暂无命令', top)
+        self.assertNotIn('暂无命令', shared.stdout)
+        self.assertIn('manual_install', top)       # what this ad-hoc build answers when a newer release exists
+        self.assertIn('sync_status{text, at, from, live}', shared.stdout)
+        self.assertIn('DocTools update install --yes [--dry-run] [--json]', shared.stdout)
         self.assertIn('usage: DocTools ', top)
         named = self.dockit('help', env=dict(self.env, DOCKIT_CLI_NAME='dockit public')).stdout
         self.assertIn('usage: dockit public <command>', named)
         self.assertIn('用 dockit public config status 回读', named)
+        self.assertIn('用 dockit public update check 回读', named)
 
     def test_info_plist_lists_exactly_the_words_the_executable_answers(self):
         """Info.plist's DocKitCommandVerbs is what a wrapper reads before forwarding a word (a word the build
@@ -259,7 +277,10 @@ class CommandWordTests(unittest.TestCase):
                  (('status', '--no-such', '--json'), 2), (('status', 'extra', '--json'), 2), (('settings', '--no-such'), 2),
                  (('config', 'bogus', '--json'), 2), (('config', 'status', '--no-such', '--json'), 2), (('update', '--json'), 2),
                  (('config', 'export', '--json'), 2), (('config', 'sync', 'maybe', '--json'), 2), (('config', 'sync', 'on', '--json'), 2),
-                 (('config', 'import', str(self.root / 'absent.json'), '--yes', '--json'), 1))
+                 (('config', 'import', str(self.root / 'absent.json'), '--yes', '--json'), 1),
+                 # refused on the words alone, before any release record is looked up
+                 (('update', 'install', '--no-such', '--json'), 2), (('update', 'install', 'extra', '--json'), 2),
+                 (('update', 'install', '--no-such'), 2))
         for words, code in cases:
             done = self.dockit(*words)
             self.assertEqual(done.returncode, code, (words, done.stdout, done.stderr))
@@ -275,6 +296,7 @@ class CommandWordTests(unittest.TestCase):
         self.assertEqual(self.call('status', '--no-such', expect=2)['error']['code'], 'usage')
         self.assertEqual(self.call('config', 'status', '--no-such', expect=2)['error']['code'], 'usage')
         self.assertEqual(self.call('config', 'sync', 'on', expect=2)['error']['code'], 'confirmation_required')
+        self.assertEqual(self.call('update', 'install', '--no-such', expect=2)['error']['code'], 'usage')
         # A relative path is resolved where the command was typed.
         done = self.dockit('config', 'export', '-o', 'here.json', '--json', cwd=self.root)
         self.assertEqual((done.returncode, json.loads(done.stdout)['path']), (0, str(self.root / 'here.json')))
@@ -287,6 +309,9 @@ class CommandWordTests(unittest.TestCase):
         status = self.call('config', 'status')
         self.assertEqual((status['command'], status['has_settings'], status['sync_enabled'], status['problem']), ('config status', True, False, None))
         self.assertEqual(status['keys'], ['defaults.' + LAST, 'defaults.' + FORMATS])
+        # The sentence under the switch: nothing has synced yet, so it is what the window shows when it opens.
+        self.assertEqual(status['sync_status'], {'text': OFF, 'at': None, 'from': 'derived', 'live': False})
+        self.assertIn('\n同步状态：' + OFF, self.dockit('config', 'status').stdout)
         self.assertFalse(self.support.exists() or self.cloud.exists())  # reading writes nothing
         exported = self.root / 'out.json'
         exported.unlink(missing_ok=True)
@@ -315,9 +340,17 @@ class CommandWordTests(unittest.TestCase):
         on = self.call('config', 'sync', 'on', '--yes')
         self.assertEqual((on['changed'], on['sync_enabled'], on['check_with'], self.mirrored()),
                          (True, True, 'DocTools config status', ('split', {'convert': 'csv'})))
-        self.assertTrue(self.call('config', 'status')['sync_enabled'])
+        after = self.call('config', 'status')
+        self.assertTrue(after['sync_enabled'])
+        # The app is not running: the sentence is the one that sync pass left, the same the command reported.
+        self.assertEqual((after['sync_status']['text'], after['sync_status']['from'], after['sync_status']['live']),
+                         (on['status'], 'record', False))
+        self.assertRegex(after['sync_status']['at'], r'^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d')
+        self.assertNotEqual(on['status'], OFF)
         self.assertIs(self.call('config', 'sync', 'on', '--yes')['changed'], False)
         self.assertIs(self.call('config', 'sync', 'off', '--yes')['sync_enabled'], False)
+        closed = self.call('config', 'status')
+        self.assertEqual((closed['sync_enabled'], closed['sync_status']['text']), (False, OFF))
 
     @unittest.skipUnless(SANDBOX.exists(), 'sandbox-exec not available')
     def test_update_check_names_this_bundle_and_its_channel_with_the_network_denied(self):
@@ -328,6 +361,80 @@ class CommandWordTests(unittest.TestCase):
         self.assertEqual(body['current'], {'version': self.info['CFBundleShortVersionString'], 'build': self.info['CFBundleVersion']})
         self.assertEqual(body['source'], {'kind': 'github', 'repository': 'zengtianli/doc-tools'})
         self.assertFalse(self.support.exists() or self.cloud.exists())  # nothing downloaded, nothing installed
+
+    def sealed(self, app=None):
+        """The bytes a replacement would change: the executable and the Info.plist of a bundle."""
+        app = app or self.app
+        return [(path.name, path.read_bytes()) for path in (app / 'Contents/MacOS' / self.binary.name, app / 'Contents/Info.plist')]
+
+    @unittest.skipUnless(SANDBOX.exists(), 'sandbox-exec not available')
+    def test_update_install_without_a_release_record_replaces_nothing(self):
+        """`update install` looks the release up first. With the network denied it has no record: exit 1,
+        `check_incomplete`, whatever the flags — never a guess, never a replacement."""
+        before = self.sealed()
+        current = {'version': self.info['CFBundleShortVersionString'], 'build': self.info['CFBundleVersion']}
+        for flags in (('--yes',), ('--dry-run',), (), ('--yes', '--dry-run')):
+            done = subprocess.run([str(SANDBOX), '-p', NO_NETWORK, str(self.binary), 'update', 'install', *flags, '--json'],
+                                  env=self.env, capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=90)
+            body = json.loads(done.stdout)
+            self.assertEqual((done.returncode, body['ok'], body['command'], body['error']['code']),
+                             (1, False, 'update install', 'check_incomplete'), flags)
+            self.assertEqual((body['current'], body['source']), (current, {'kind': 'github', 'repository': 'zengtianli/doc-tools'}))
+            self.assertNotIn('installed', body)
+        text = subprocess.run([str(SANDBOX), '-p', NO_NETWORK, str(self.binary), 'update', 'install', '--yes'], env=self.env,
+                              capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=90)
+        self.assertEqual((text.returncode, text.stdout), (1, ''))
+        self.assertTrue(text.stderr.strip())
+        self.assertEqual(self.sealed(), before)
+        self.assertFalse(self.support.exists() or self.cloud.exists())  # nothing downloaded, nothing backed up
+
+    @unittest.skipUnless(ONLINE, 'set DOCKIT_TEST_ONLINE=1 to read the public release record from GitHub once')
+    def test_update_install_with_the_public_release_record_installs_nothing(self):
+        """The public release record is readable. This build is ad-hoc signed and its channel is GitHub, so the
+        shared installer does not replace it (the window's button is「下载新版…」, not「升级到新版…」):
+        nothing newer → exit 0 with `installed: false`; something newer → exit 1 `manual_install` with the package
+        address. `--dry-run` and a missing `--yes` get the same answers. Nothing is downloaded or replaced."""
+        before = self.sealed()
+        current = {'version': self.info['CFBundleShortVersionString'], 'build': self.info['CFBundleVersion']}
+        checked = self.call('update', 'check')
+        self.assertEqual((checked['update_available'], checked['upgrade']['in_app'], checked['upgrade']['command']), (False, False, None))
+        for flags in (('--yes',), ('--dry-run',), ()):
+            same = self.call('update', 'install', *flags)   # the test bundle is ahead of every release
+            self.assertEqual((same['command'], same['installed'], same['current'], same['latest']),
+                             ('update install', False, current, checked['latest']), flags)
+            self.assertIn(same['state'], ('up_to_date', 'ahead_of_channel'))
+            self.assertTrue(same['message'])
+            self.assertNotIn('dry_run', same)
+        self.assertIn('不需要升级', self.dockit('update', 'install', '--yes').stdout)
+        self.assertEqual(self.sealed(), before)
+
+        # An older copy of the same executable: a newer release exists.
+        older = self.root / ('older-' + uuid.uuid4().hex[:8]) / 'DocKit.app'
+        (older / 'Contents/MacOS').mkdir(parents=True)
+        shutil.copy2(self.binary, older / 'Contents/MacOS' / self.binary.name)
+        (older / 'Contents/Info.plist').write_bytes(plistlib.dumps(dict(self.info, CFBundleShortVersionString='0.0.1', CFBundleVersion='1')))
+        untouched = self.sealed(older)
+        binary = older / 'Contents/MacOS' / self.binary.name
+
+        def typed(*words):
+            done = subprocess.run([str(binary), *words, '--json'], env=self.env, capture_output=True, text=True,
+                                  stdin=subprocess.DEVNULL, timeout=90)
+            return done.returncode, json.loads(done.stdout)
+
+        code, newer = typed('update', 'check')
+        self.assertEqual((code, newer['state'], newer['update_available']), (0, 'update_available', True))
+        self.assertEqual((newer['upgrade']['in_app'], newer['upgrade']['button'], newer['upgrade']['command']), (False, '下载新版…', None))
+        self.assertTrue(newer['upgrade']['download_url'].startswith('https://github.com/zengtianli/doc-tools/'))
+        for flags in (('--yes',), ('--dry-run',), ()):
+            code, refused = typed('update', 'install', *flags)
+            self.assertEqual((code, refused['ok'], refused['command'], refused['error']['code']),
+                             (1, False, 'update install', 'manual_install'), flags)
+            self.assertEqual((refused['download_url'], refused['current']),
+                             (newer['upgrade']['download_url'], {'version': '0.0.1', 'build': '1'}))
+            self.assertNotIn('installed', refused)
+        self.assertEqual(self.sealed(older), untouched)
+        self.assertEqual(sorted(path.name for path in older.parent.iterdir()), ['DocKit.app'])   # no download, no leftover beside it
+        self.assertFalse((self.support / 'backups').exists() or (self.support / 'trash').exists())
 
     # ── a running app
 
@@ -473,19 +580,30 @@ class AssembledBundleTests(unittest.TestCase):
                          (True, 9, {'last_operation': None, 'target_formats': {}}))
         config = json.loads(self.run_words('config', 'status', '--json').stdout)
         self.assertEqual((config['ok'], config['command'], config['has_settings'], config['sync_enabled']), (True, 'config status', True, False))
+        # The sentence under the switch: the temporary support directory holds no sync record, so it is the
+        # initial one for the switch (live when your own copy of the app happens to be running).
+        self.assertEqual(config['sync_status'], {'text': OFF, 'at': None, 'from': 'derived', 'live': config['app_running']})
         wrong = self.run_words('config', 'status', '--no-such', '--json')
         self.assertEqual((wrong.returncode, json.loads(wrong.stdout)['error']['code']), (2, 'usage'))
         wrong = self.run_words('status', '--no-such', '--json')
         self.assertEqual((wrong.returncode, json.loads(wrong.stdout)['error']['code']), (2, 'usage'))
+        wrong = self.run_words('update', 'install', '--no-such', '--json')   # refused on the words alone: no lookup, no replacement
+        self.assertEqual((wrong.returncode, json.loads(wrong.stdout)['error']['code']), (2, 'usage'))
         top = self.run_words('help')
         self.assertEqual(top.returncode, 0)
-        for line in ('  status ', '  settings ', '  config status ', '  update check ', '  config export ', '  config import ', '  config sync '):
+        for line in ('  status ', '  settings ', '  config status ', '  update check ', '  config export ', '  config import ',
+                     '  config sync ', '  update install --yes '):
             self.assertIn('\n' + line, top.stdout)
+        self.assertNotIn('暂无命令', top.stdout)
         if SANDBOX.exists():
             check = self.run_words('update', 'check', '--json', prefix=(str(SANDBOX), '-p', NO_NETWORK))
             body = json.loads(check.stdout)
             self.assertEqual((check.returncode, body['error']['code'], body['current']),
                              (1, 'check_incomplete', {'version': self.info['CFBundleShortVersionString'], 'build': self.info['CFBundleVersion']}))
+            # No release record can be read: the upgrade command stops there, before any confirmation or replacement.
+            install = self.run_words('update', 'install', '--yes', '--json', prefix=(str(SANDBOX), '-p', NO_NETWORK))
+            body = json.loads(install.stdout)
+            self.assertEqual((install.returncode, body['command'], body['error']['code']), (1, 'update install', 'check_incomplete'))
         self.assertFalse((self.root / 'support').exists() or (self.root / 'cloud').exists())
 
 
