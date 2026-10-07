@@ -3,9 +3,17 @@ import Foundation
 @main
 enum PreferencesCheck {
     @MainActor static func main() throws {
-        let domain = "dockit-fixture-" + UUID().uuidString
+        // The domain is a file inside a temporary directory, removed with it afterwards. A bare domain name
+        // leaves an empty dockit-fixture-*.plist behind in ~/Library/Preferences on every run.
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("dockit-fixture-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let domain = directory.appendingPathComponent("prefs").path
         let preferences = UserDefaults(suiteName: domain)!
-        defer { preferences.removePersistentDomain(forName: domain) }
+        defer {
+            preferences.removePersistentDomain(forName: domain)
+            preferences.synchronize()
+            try? FileManager.default.removeItem(at: directory)
+        }
         let fixture = """
         [{"id":"fixtureA","targets":[{"id":"a1"},{"id":"a2"}],
           "options":[{"id":"fixtureConsent","type":"bool","group":"privacy","default":false}]},

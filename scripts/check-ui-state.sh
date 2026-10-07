@@ -15,3 +15,5 @@ xcrun swiftc -parse-as-library Sources/Models.swift Sources/BackendClient.swift 
 DOCKIT_OUTPUT_DIR="$TMP/Outputs" "$TMP/state-check" "$DIR/build/DocKit.app/Contents/Resources/backend/doc_gui_backend.py" "$TMP/Inputs/活动说明.docx"
 xcrun swiftc -parse-as-library Sources/Models.swift Sources/BackendClient.swift Sources/ViewModel.swift tests/PreferencesCheck.swift -o "$TMP/preferences-check"
 "$TMP/preferences-check"
+# Command words of the app executable and a running app that follows them, off screen (tests/test_lifecycle_cli.py).
+bash scripts/accept/lifecycle.sh

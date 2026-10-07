@@ -156,6 +156,18 @@ final class DocKitAppDelegate: NSObject, NSApplicationDelegate {
 @main
 enum DocKitMain {
     @MainActor static func main() {
+        // Command words (DocKitCLI.swift): `status`, `settings`, `config …`, `update check`, `help`.
+        // Answered here, before any NSApplication exists — no window, no Dock icon, no focus change.
+        let words = Array(CommandLine.arguments.dropFirst())
+        if DocKitCLI.handles(words.first) { exit(DocKitCLI.run(words)) }
+        if let index = words.firstIndex(of: Lifecycle.probeFlag) {
+            // Test-only: this executable as the running app, off screen, in an isolated run.
+            guard Lifecycle.isolated, let store = Lifecycle.store(), words.count > index + 1 else {
+                fputs("\(Lifecycle.probeFlag) runs only in an isolated run. \(Lifecycle.refusal)\n", stderr)
+                exit(64)
+            }
+            LifecycleProbe.run(words[index + 1], defaults: store.defaults)
+        }
         if LaneSignal.quiet {
             quietMain()
             return
@@ -204,15 +216,9 @@ struct DocToolsApp: App {
 
     init() {
         if DocKitRecording.requested { DocKitRecording.record("app_initialized") }
-        if !DocKitRecording.requested {
-            let configuration = AppConfiguration(productID: "io.github.zengtianli.DocTools",
-                defaultsKeys: AppViewModel.portablePreferenceKeys)
-            configuration.onChange = {
-                NotificationCenter.default.post(name: .dockitPreferencesChanged, object: nil)
-            }
-            AppLifecycleUI.install(name: "DocKit", configuration: configuration,
-                                   updateSource: .github(repository: "zengtianli/doc-tools"))
-        }
+        // The window, its reload signal and the follower for `config …` typed in another process:
+        // one function, shared with the command words (Lifecycle in DocKitCLI.swift).
+        if !DocKitRecording.requested { Lifecycle.installApp() }
     }
 
     var body: some Scene {
