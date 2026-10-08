@@ -20,9 +20,18 @@ ap.add_argument("--out",type=Path,default=ROOT/"build/site",help="Site package r
 release=json.loads((ROOT/"dist/release-manifest.json").read_text())
 archive=ROOT/"dist"/release["filename"]
 assert hashlib.sha256(archive.read_bytes()).hexdigest()==release["sha256"],"Release archive hash mismatch"
-def ui_sources_sha256():
-    """Hash of every file under Sources/ (path and bytes, sorted): the UI shown in the recordings."""
+def ui_sources_sha256(source_commit=None):
+    """Hash the UI of the published archive, rather than a newer working checkout."""
     h=hashlib.sha256()
+    if source_commit:
+        if release.get("source_dirty") is not False:
+            raise SystemExit("Published media reuse requires a clean release source commit")
+        paths=subprocess.check_output(["git","-C",str(ROOT),"ls-tree","-r","--name-only",source_commit,"--","Sources"],text=True).splitlines()
+        if not paths: raise SystemExit("Release source commit has no UI sources")
+        for name in sorted(paths):
+            data=subprocess.check_output(["git","-C",str(ROOT),"show",source_commit+":"+name])
+            h.update(name.encode()+b"\0"+data+b"\0")
+        return h.hexdigest()
     for f in sorted(p for p in (ROOT/"Sources").rglob("*") if p.is_file()):
         h.update(str(f.relative_to(ROOT)).encode()+b"\0"+f.read_bytes()+b"\0")
     return h.hexdigest()
@@ -42,10 +51,11 @@ if not a.preview:
         # A later release may reuse the recording only when its UI sources are byte-identical to the
         # recorded build and the manifest names that exact release (build and archive hash). A reuse
         # entry may instead pin its own ui_sources_sha256 with a ui_changes note when Sources/ changed
-        # without changing what is drawn (e.g. a self-test entry point); any further edit breaks it.
+        # without changing what is drawn (e.g. a self-test entry point). Bind this to the exact
+        # clean source commit of the archive; unrelated newer checkout edits are not that release.
         reuse=(evidence.get("reused_for") or {}).get(release["version"]) or {}
         pinned=reuse.get("ui_sources_sha256") if reuse.get("ui_changes") else None
-        if (pinned or evidence.get("ui_sources_sha256"))!=ui_sources_sha256(): raise SystemExit("Recorded product version does not match release, and the UI sources changed since the recording")
+        if (pinned or evidence.get("ui_sources_sha256"))!=ui_sources_sha256(release.get("source_commit")): raise SystemExit("Recorded product version does not match release, and the released UI sources changed since the recording")
         if str(reuse.get("build"))!=str(release.get("build")) or reuse.get("release_sha256")!=release["sha256"]: raise SystemExit("Recorded product version does not match release, and the manifest does not name this release for reuse")
     if evidence.get("screenshot_sha256")!=hashlib.sha256((media/"screenshot.png").read_bytes()).hexdigest(): raise SystemExit("Screenshot does not match reviewed media")
     for name in [item[0] for item in clips]+["tutorial"]:
@@ -88,7 +98,7 @@ if (media/"tutorial.mp4").is_file():
     tutorial='<div class="demo-actions"><a class="text-link" href="media/tutorial.mp4" download>下载三段完整演示 ↓</a></div>'
 measured_version=json.loads((ROOT/"perf/lightweight.json").read_text())["version"].split(" ")[0]
 historical=measured_version!=release["version"] and os.environ.get("APP_RELEASE_KEEP_HISTORY")=="1"
-block=perf_block.standalone_section(ROOT/"perf/lightweight.json",measured_version if historical else release["version"],"#167e6d")
+block=perf_block.standalone_section(ROOT/"perf/lightweight.json",measured_version,"#167e6d")
 measured_build=json.loads((ROOT/"perf/lightweight.json").read_text())["version"]
 released_build=f"{release['version']} ({release['build']})"
 if measured_build!=released_build and not historical:
