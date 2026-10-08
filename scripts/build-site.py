@@ -55,7 +55,11 @@ if not a.preview:
         # clean source commit of the archive; unrelated newer checkout edits are not that release.
         reuse=(evidence.get("reused_for") or {}).get(release["version"]) or {}
         pinned=reuse.get("ui_sources_sha256") if reuse.get("ui_changes") else None
-        if (pinned or evidence.get("ui_sources_sha256"))!=ui_sources_sha256(release.get("source_commit")): raise SystemExit("Recorded product version does not match release, and the released UI sources changed since the recording")
+        accepted={pinned or evidence.get("ui_sources_sha256")}
+        if release.get("source_commit") and reuse.get("ui_changes"):
+            accepted.update(item["ui_sources_sha256"] for item in reuse.get("ui_source_history", [])
+                            if item.get("checked") and item.get("ui_sources_sha256"))
+        if ui_sources_sha256(release.get("source_commit")) not in accepted: raise SystemExit("Recorded product version does not match release, and the released UI sources changed since the recording")
         if str(reuse.get("build"))!=str(release.get("build")) or reuse.get("release_sha256")!=release["sha256"]: raise SystemExit("Recorded product version does not match release, and the manifest does not name this release for reuse")
     if evidence.get("screenshot_sha256")!=hashlib.sha256((media/"screenshot.png").read_bytes()).hexdigest(): raise SystemExit("Screenshot does not match reviewed media")
     for name in [item[0] for item in clips]+["tutorial"]:
