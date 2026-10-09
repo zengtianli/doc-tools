@@ -10,6 +10,7 @@ Each operation must finish within 90 s; DOCKIT_VERIFY_TIMEOUT=<seconds> raises t
 """
 from pathlib import Path
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 import os
@@ -23,7 +24,10 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--app", type=Path, default=ROOT / "build/DocKit.app")
 ap.add_argument("--report", type=Path, default=ROOT / "build/package-verification.json")
 ap.add_argument("--record-modules", type=Path)
+ap.add_argument("--jobs", type=int, default=os.cpu_count() or 1, help="parallel independent operations (default: CPU count)")
 cli = ap.parse_args()
+if cli.jobs < 1:
+    ap.error("--jobs must be at least 1")
 original_app = cli.app.resolve()
 TIMEOUT = float(os.environ.get("DOCKIT_VERIFY_TIMEOUT") or 90)
 TRACE_HOOK = """import atexit, os, sys
@@ -109,12 +113,15 @@ with tempfile.TemporaryDirectory(prefix="dockit-relocation-") as td:
     records=[]
     def produced(result,suffix):
         return next(Path(p) for p in result["results"][0]["outputs"] if p.endswith(suffix))
-    for op,args,names in cases:
+    def verify_case(indexed_case):
+        index,(op,args,names)=indexed_case
         legacy_ppt=names==["读书会介绍.ppt"]
-        result,seconds=run(["gui-run","--op",op]+args+["--files"]+[str(fixtures/n) for n in names],sandbox=lo_profile if legacy_ppt else profile)
+        result,seconds=run(["gui-run","--op",op]+args+["--files"]+[str(fixtures/n) for n in names],
+                           sandbox=lo_profile if legacy_ppt else profile,
+                           extra_env={"DOCKIT_OUTPUT_DIR":str(root/"Outputs"/f"case-{index}")})
         assert result.get("ok") and result["succeeded"]==result["total"] and result["total"]>0, result
         assert all(Path(p).exists() for row in result["results"] for p in row["outputs"]), result
-        records.append({"operation":op,"targets":args,"inputs":names,"seconds":seconds}|({"sandbox":"IP denied; /private/tmp unix sockets allowed for LibreOffice"} if legacy_ppt else {}))
+        record={"operation":op,"targets":args,"inputs":names,"seconds":seconds}|({"sandbox":"IP denied; /private/tmp unix sockets allowed for LibreOffice"} if legacy_ppt else {})
         if op=="convert" and args==["--to","md"] and names[0].endswith((".ppt",".pptx")):
             text=produced(result,".md").read_text(encoding="utf-8")
             assert "## Slide 1" in text and "星河读书会" in text, text
@@ -134,6 +141,16 @@ with tempfile.TemporaryDirectory(prefix="dockit-relocation-") as td:
         if op=="convert" and args==["--to","md"] and names==["活动说明.docx"]:
             text=next(Path(p) for p in result["results"][0]["outputs"] if p.endswith(".md")).read_text(encoding="utf-8")
             assert "星河读书会 · 活动说明" in text and "| 签到 | 09:30 |" in text and "120 平方米" in text, text
+        print(f"PASS {index + 1}/{len(cases)}: {op} {', '.join(names)}",flush=True)
+        return record
+    # Legacy Office conversion shares LibreOffice resources and runs after the independent cases.
+    independent=[c for c in enumerate(cases) if not any(n.endswith((".doc", ".xls", ".ppt")) for n in c[1][2])]
+    legacy=[c for c in enumerate(cases) if c not in independent]
+    by_index={}
+    with ThreadPoolExecutor(max_workers=cli.jobs) as pool:
+        by_index.update(zip((i for i,_ in independent),pool.map(verify_case,independent)))
+    by_index.update((i,verify_case((i,case))) for i,case in legacy)
+    records=[by_index[i] for i in range(len(cases))]
     # Legacy .ppt without LibreOffice: an explicit failure that tells the user to save as .pptx, never a success.
     ppt=fixtures/"读书会介绍.ppt"
     if not ppt.exists(): ppt=root/"no-libreoffice"/"读书会介绍.ppt";ppt.parent.mkdir();ppt.write_bytes(b"\xd0\xcf\x11\xe0legacy")

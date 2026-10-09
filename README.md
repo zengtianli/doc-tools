@@ -17,7 +17,7 @@ Mac 上的本地文档工具：统一中文引号、整理标点与单位、转�
 
 SwiftUI 界面；文档处理靠包内 Python 3.12，只在启动读操作列表和点「执行」时起子进程、做完即退出，空闲只剩界面进程。运行时只带各项操作实际用到的部分：docx 转 Markdown 用约 140 行的内容识别代替 magika 与 onnxruntime 模型运行时，去掉各库测试目录和用不到的标准库，二进制去掉调试符号；各项操作用到的模块预编译成字节码，不再每次从源码编译。
 
-<sub>v1.1.3 (39) · Mac16,12 / Apple M4 / macOS 27.2 · 静默只读加载包内真实操作目录并离屏绘制初始界面；输入文件为空，不处理文档，不写本人偏好。 · 2026-10-05。数字来自所列设备实测，版本更新后重新测量。内存口径为 phys_footprint；CPU 为 60 秒采样窗内 CPU 时间 ÷ 墙钟；大小按十进制 MB。原始数据见 [perf/lightweight.json](perf/lightweight.json)。</sub>
+<sub>v1.1.3 (39) · Mac16,12 / Apple M4 / macOS 27.2 · 静默只读加载包内真实操作目录并离屏绘制初始界面；输入文件为空，不处理文档，不写本人偏好。 · 2026-10-05。数字来自所列版本与设备的测量记录；当前版本与测量范围以本页说明为准。内存口径为 phys_footprint；CPU 为 60 秒采样窗内 CPU 时间 ÷ 墙钟；大小按十进制 MB。原始数据见 [perf/lightweight.json](perf/lightweight.json)。</sub>
 <!-- lightweight:end -->
 
 以上是本地验收构建 **1.1.3 (39)** 的实测，公开下载仍为 **1.1.3 (37)**；两份构建分别标注，不把本地样本当作已发布包的性能。
@@ -72,6 +72,8 @@ bash scripts/check-ui-state.sh
 ```
 
 产物：`build/DocKit.app`、`dist/DocKit-v1.1.3-arm64.zip` 和 `dist/release-manifest.json`。构建不自动替换本机安装版。文档引擎和受支持格式的依赖在 `Contents/Resources`，没有对作者工作区的运行时依赖。
+
+编译默认使用本机核数，可用 `DOCKIT_BUILD_JOBS` 调整。包验证默认按核数并行执行独立用例，每个用例使用自己的输出目录；依赖 LibreOffice 的老格式转换串行执行，可用 `verify-package.py --jobs N` 调整并行数。界面状态、偏好和生命周期测试并行运行。验证独立构建时传 `verify-package.py --app /绝对路径/DocKit.app`，状态与固定验收脚本传 `DOCKIT_APP=/绝对路径/DocKit.app`。
 
 打包时 `scripts/slim-runtime.py` 去掉运行时用不到的部分（magika/onnxruntime、各包测试目录、Tk 等；仍被导入的模块会让构建失败），并为各项操作用到的模块预编译 unchecked-hash 的 `.pyc`。Python 不会拿这些 `.pyc` 与 `.py` 比对，所以直接修改构建好的 `DocKit.app` 里的 `.py` 不会触发重新编译，仍运行旧字节码；改后端请改源码后重新构建。
 

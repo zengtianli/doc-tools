@@ -17,7 +17,7 @@ Local document tools for Mac: standardize Chinese quotation marks, clean up punc
 
 SwiftUI interface; document work runs in the bundled Python 3.12, started as a subprocess only to read the operation list at launch and when you click Run, and it exits when done, so only the UI process remains while idle. The runtime ships only what the operations use: a ~140-line content sniffer replaces magika and the onnxruntime model runtime for docx to Markdown, library test folders and unused standard-library parts are removed, binaries are stripped, and the modules the operations import are precompiled so nothing is recompiled from source on each run.
 
-<sub>v1.1.3 (39) · Mac16,12 / Apple M4 / macOS 27.2 · measured 2026-10-05. Measured on the listed device; re-measured for each version. Memory uses phys_footprint; CPU is CPU time ÷ wall time over a 60-second sampling window; sizes in decimal MB. Raw data: [perf/lightweight.json](perf/lightweight.json).</sub>
+<sub>v1.1.3 (39) · Mac16,12 / Apple M4 / macOS 27.2 · measured 2026-10-05. Measured on the listed version and device; the current version and measurement scope are described on this page. Memory uses phys_footprint; CPU is CPU time ÷ wall time over a 60-second sampling window; sizes in decimal MB. Raw data: [perf/lightweight.json](perf/lightweight.json).</sub>
 <!-- lightweight:end -->
 
 These measurements describe local acceptance build **1.1.3 (39)**. The public download remains **1.1.3 (37)**; the local samples are not measurements of that published package.
@@ -71,7 +71,9 @@ python3 scripts/verify-package.py
 bash scripts/check-ui-state.sh
 ```
 
-Outputs: `build/DocKit.app`, `dist/DocKit-v1.1.1-arm64.zip`, and `dist/release-manifest.json`. Building does not automatically replace the locally installed version. The document engine and dependencies for supported formats are in `Contents/Resources`, with no runtime dependency on the author’s workspace.
+Outputs: `build/DocKit.app`, `dist/DocKit-v1.1.3-arm64.zip`, and `dist/release-manifest.json`. Building does not automatically replace the locally installed version. The document engine and dependencies for supported formats are in `Contents/Resources`, with no runtime dependency on the author’s workspace.
+
+Compilation uses the local CPU count by default; set `DOCKIT_BUILD_JOBS` to adjust it. Package verification runs independent cases in parallel with separate output directories; legacy conversions that depend on LibreOffice run serially. Use `verify-package.py --jobs N` to adjust concurrency. State, preferences, and lifecycle checks run in parallel. To verify a separate build, pass `verify-package.py --app /absolute/path/DocKit.app` and set `DOCKIT_APP=/absolute/path/DocKit.app` for the state and fixed acceptance scripts.
 
 During packaging, `scripts/slim-runtime.py` leaves out what the runtime never uses (magika/onnxruntime, package test suites, Tk and more; a removed module that is still imported fails the build) and precompiles unchecked-hash `.pyc` files for the modules the operations import. Python never compares these `.pyc` files with their `.py` sources, so editing a `.py` inside a built `DocKit.app` does not trigger recompilation and the old bytecode keeps running; change the backend in the source tree and rebuild.
 

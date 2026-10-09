@@ -2,13 +2,16 @@
 # Contract (app_sop accept): run from repo root; exit 0 = pass, 78 = no acceptor, other = fail.
 # Writes $SOP_OUT_DIR/<check>.detail.json with a "summary" when accept_detail is called.
 set -euo pipefail
+# Acceptance helpers share the bundled interpreter. Their imports must not modify
+# the signed runtime while the privacy check fingerprints it in parallel.
+export PYTHONDONTWRITEBYTECODE=1
 ACCEPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$ACCEPT_DIR/../.." && pwd)"
 cd "$REPO"
 CHECK="${SOP_CHECK:-$(basename "${0%.*}")}"
 OUT_DIR="${SOP_OUT_DIR:-$REPO/perf/acceptance}"
 mkdir -p "$OUT_DIR"
-APP="$REPO/build/DocKit.app"
+APP="${DOCKIT_APP:-$REPO/build/DocKit.app}"
 # Bundled runtime is what users get; fall back to repo python only for the backend-only checks.
 PY="$APP/Contents/Resources/python/bin/python3.12"
 BACKEND="$REPO/backend/doc_gui_backend.py"

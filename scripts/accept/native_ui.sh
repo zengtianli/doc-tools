@@ -31,7 +31,7 @@ cat > "$TAPP/Contents/Info.plist" <<'PLIST'
 </dict></plist>
 PLIST
 BIN="$TAPP/Contents/MacOS/DocKit"
-xcrun swiftc -O -parse-as-library -target arm64-apple-macosx15.0 Sources/*.swift -o "$BIN" \
+xcrun swiftc -j "${DOCKIT_BUILD_JOBS:-$(sysctl -n hw.ncpu)}" -O -parse-as-library -target arm64-apple-macosx15.0 Sources/*.swift -o "$BIN" \
   >"$WORK/compile.log" 2>&1 || { tail -20 "$WORK/compile.log"; fail "Sources/*.swift 编译失败"; }
 T1=$(date +%s)
 

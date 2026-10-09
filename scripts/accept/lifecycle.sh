@@ -15,7 +15,7 @@
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$REPO"
-RES="$REPO/build/DocKit.app/Contents/Resources"
+RES="${DOCKIT_APP:-$REPO/build/DocKit.app}/Contents/Resources"
 [ -x "$RES/python/bin/python3.12" ] || { echo "missing bundled runtime $RES/python (run ./build.sh first)"; exit 78; }
 WORK="$(mktemp -d -t dockit-lifecycle)"
 PREFIX="io.github.zengtianli.DocTools.LifecycleTest"
@@ -49,7 +49,7 @@ cat > "$TAPP/Contents/Info.plist" <<PLIST
 <key>LSUIElement</key><true/>
 </dict></plist>
 PLIST
-xcrun swiftc -parse-as-library -target arm64-apple-macosx15.0 Sources/*.swift -o "$TAPP/Contents/MacOS/DocTools" \
+xcrun swiftc -j "${DOCKIT_BUILD_JOBS:-$(sysctl -n hw.ncpu)}" -parse-as-library -target arm64-apple-macosx15.0 Sources/*.swift -o "$TAPP/Contents/MacOS/DocTools" \
   >"$WORK/compile.log" 2>&1 || { tail -20 "$WORK/compile.log"; echo "FAIL: Sources/*.swift did not compile"; exit 1; }
 
 # Clean env: no recording, demo or quiet-launch variables may leak into the test.
