@@ -19,6 +19,8 @@ if not (a.upload or a.check_prepared):
     run(["bash","build.sh"])
     run(["python3","scripts/verify-package.py"])
     run(["bash","scripts/check-ui-state.sh"])
+    # A release is a package any Mac opens directly: Developer ID, notarized, ticket stapled (fail-closed).
+    run(["python3","scripts/notarize.py"])
 manifest=json.loads((ROOT/"dist/release-manifest.json").read_text())
 archive=ROOT/"dist"/manifest["filename"]
 if hashlib.sha256(archive.read_bytes()).hexdigest()!=manifest["sha256"]:
@@ -39,6 +41,11 @@ with tempfile.TemporaryDirectory(prefix="dockit-release-check-") as temporary:
     executable=app/"Contents/MacOS"/info["CFBundleExecutable"]
     if hashlib.sha256(executable.read_bytes()).hexdigest()!=manifest["source_executable_sha256"]:
         raise SystemExit("Prepared archive executable does not match its recorded source hash.")
+    if not a.check_prepared:
+        # Fresh preparations and uploads: never an ad-hoc, development-signed or un-notarized package.
+        import sys; sys.dont_write_bytecode=True; sys.path.insert(0,str(ROOT/"scripts")); import notarize
+        problems=notarize.notarized(app)
+        if problems: raise SystemExit("Prepared archive is not a notarized Developer ID package; no upload performed:\n  "+"\n  ".join(problems))
 run(["python3","scripts/build-site.py"])
 if a.upload:
     dirty=subprocess.check_output(["git","status","--porcelain"],cwd=ROOT,text=True).strip()

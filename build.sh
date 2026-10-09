@@ -17,6 +17,10 @@ mkdir -p build
 xcrun swiftc -j "${DOCKIT_BUILD_JOBS:-$(sysctl -n hw.ncpu)}" -O -parse-as-library -target arm64-apple-macosx15.0 Sources/*.swift -o build/DocTools
 # DOCKIT_OUT=build/perf-next ./build.sh puts the app, archive and manifest there instead of build/ + dist/.
 python3 scripts/package.py ${DOCKIT_OUT:+--out "$DOCKIT_OUT"}
+# --install: only a package any Mac can run goes into /Applications. With a Developer ID certificate
+# package.py has signed the distribution build; notarize, staple, then install (both steps fail closed).
+# An ad-hoc build (no certificate on this Mac) stays in the build directory as a local trial.
 if [ "${1:-}" = "--install" ]; then
-  echo 'Built build/DocKit.app. Drag this app into Applications to install.'
+  python3 scripts/notarize.py ${DOCKIT_OUT:+--dir "$DOCKIT_OUT"}
+  python3 scripts/install.py --app "${DOCKIT_OUT:-build}/DocKit.app"
 fi

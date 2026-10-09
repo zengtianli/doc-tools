@@ -28,7 +28,7 @@ Requires **macOS 15 or later and an Apple Silicon Mac**. Download `DocKit-v1.1.3
 
 The release includes Python and document dependencies. Common operations require no uv, Python, or Office installation and no account; file contents are processed locally. The app has no background document process and starts the engine only while running a task.
 
-The current version is ad-hoc signed and has not been notarized by Apple. If macOS blocks the first launch, attempt to open it, then choose “Open Anyway” in System Settings → Privacy & Security. If you have verified the source but macOS still says the app is damaged, run this in Terminal:
+The downloadable 1.1.3 (37) is ad-hoc signed and has not been notarized by Apple; every later release is signed with a Developer ID, notarized by Apple and stapled, opens directly after download, and needs none of the steps below. For 1.1.3 (37): if macOS blocks the first launch, attempt to open it, then choose “Open Anyway” in System Settings → Privacy & Security. If you have verified the source but macOS still says the app is damaged, run this in Terminal:
 
 ```sh
 xattr -cr "/Applications/DocKit.app"
@@ -71,7 +71,11 @@ python3 scripts/verify-package.py
 bash scripts/check-ui-state.sh
 ```
 
-Outputs: `build/DocKit.app`, `dist/DocKit-v1.1.3-arm64.zip`, and `dist/release-manifest.json`. Building does not automatically replace the locally installed version. The document engine and dependencies for supported formats are in `Contents/Resources`, with no runtime dependency on the author’s workspace.
+Outputs: `build/DocKit.app`, `dist/DocKit-v1.1.3-arm64.zip`, and `dist/release-manifest.json`. Building does not automatically replace the locally installed version.
+
+There are two kinds of signature, and `scripts/package.py` picks by the local keychain: with a Developer ID Application certificate, the app and every executable and dynamic library of the bundled runtime are signed with it, with the hardened runtime and a secure timestamp (the distribution build); without one the build is ad-hoc signed, for local trial only (Gatekeeper rejects it on other Macs). Set `DOCKIT_SIGN_IDENTITY` when several certificates exist; `DOCKIT_SIGN_IDENTITY=-` forces ad-hoc. Signing with a certificate must run in the login session; over plain SSH the keychain is locked.
+
+Only a package that any Mac can run goes into Applications: `bash build.sh --install` builds, then runs `scripts/notarize.py` (submits to Apple notarization, staples the ticket, rechecks with `stapler validate` and `spctl`, and re-creates the archive and manifest from the stapled app) and `scripts/install.py` (rechecks, replaces the installed copy, moves the old one to the Trash, and asks the installed app for `status`). Both steps refuse ad-hoc or Apple Development signatures, packages that are not notarized, and provisioning profiles that list devices. To install the same package on another Mac: `python3 scripts/install.py --archive DocKit-v1.1.3-arm64.zip`. Notarization credentials come from `DOCKIT_NOTARY_PROFILE`, or `NOTARY_KEY`, `NOTARY_KEY_ID` and `NOTARY_ISSUER`; notarization only submits the package to Apple for checking and publishes nothing. `DOCKIT_OUT=dir` puts the app, archive and manifest in that directory and leaves `dist/` alone. The document engine and dependencies for supported formats are in `Contents/Resources`, with no runtime dependency on the author’s workspace.
 
 Compilation uses the local CPU count by default; set `DOCKIT_BUILD_JOBS` to adjust it. Package verification runs independent cases in parallel with separate output directories; legacy conversions that depend on LibreOffice run serially. Use `verify-package.py --jobs N` to adjust concurrency. State, preferences, and lifecycle checks run in parallel. To verify a separate build, pass `verify-package.py --app /absolute/path/DocKit.app` and set `DOCKIT_APP=/absolute/path/DocKit.app` for the state and fixed acceptance scripts.
 
@@ -83,7 +87,7 @@ During packaging, `scripts/slim-runtime.py` leaves out what the runtime never us
 
 `VERSION` is the version source. `scripts/package.py` generates hashes and the release manifest from the actual installation package. `scripts/build-site.py` generates `build/site/` and an explicit public allowlist, `site-manifest.json`. `--preview` is for local preview only; a production build requires real media matching the version.
 
-`python3 scripts/publish.py` builds and verifies a new release and website. After recording and verification, `python3 scripts/publish.py --upload` consumes the prepared dist package directly, checking its hash, embedded signature, actual version/build, and correspondence with the media without recompiling. Uploading requires a clean working tree and pushed commits. The Release points to the binary source commit recorded in the package manifest; an existing Release with the same name will not be overwritten. The website package is consumed by the existing deployment entry point; the publishing script does not change server configuration. Requirements for real recordings are in `docs/demo/plan.md`; original footage stays in the gitignored build/tutorial/raw/.
+`python3 scripts/publish.py` builds and verifies a new release and website, then notarizes and staples it; without a Developer ID certificate or an accepted notarization it stops. After recording and verification, `python3 scripts/publish.py --upload` consumes the prepared dist package directly, checking its hash, embedded signature, actual version/build, and correspondence with the media, and requiring a notarized, stapled Developer ID package (an ad-hoc package is not uploaded), without recompiling. Uploading requires a clean working tree and pushed commits. The Release points to the binary source commit recorded in the package manifest; an existing Release with the same name will not be overwritten. The website package is consumed by the existing deployment entry point; the publishing script does not change server configuration. Requirements for real recordings are in `docs/demo/plan.md`; original footage stays in the gitignored build/tutorial/raw/.
 
 ## License
 
@@ -91,4 +95,4 @@ Original code is licensed under [MIT](LICENSE). Runtime and dependency licenses 
 
 ## English
 
-DocKit is a native macOS document toolbox for Chinese typography, conversion, splitting and merging. It works on copies and preserves your original files. The release bundles its Python runtime and document dependencies, so supported local operations need no account, uv or Python installation. Requires Apple Silicon and macOS 15+. The current build is ad-hoc signed and not notarized. See the product website for installation, real demonstrations and supported formats.
+DocKit is a native macOS document toolbox for Chinese typography, conversion, splitting and merging. It works on copies and preserves your original files. The release bundles its Python runtime and document dependencies, so supported local operations need no account, uv or Python installation. Requires Apple Silicon and macOS 15+. The downloadable 1.1.3 (37) is ad-hoc signed and not notarized; later releases are Developer ID signed and notarized. See the product website for installation, real demonstrations and supported formats.

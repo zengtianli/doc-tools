@@ -28,7 +28,7 @@ SwiftUI 界面；文档处理靠包内 Python 3.12，只在启动读操作列表
 
 发布包已经包含 Python 与文档依赖，常用操作不需要安装 uv、Python 或 Office，不需要账号，文件内容在本机处理。应用没有后台文档进程，执行任务时才启动引擎。
 
-当前版本为 ad-hoc 签名，尚未经过 Apple 公证。若首次打开被系统阻止，先尝试打开，再到「系统设置 → 隐私与安全性」点「仍要打开」。来源确认可信但仍显示损坏时，可在终端执行：
+目前可下载的 1.1.3 (37) 为 ad-hoc 签名，尚未经过 Apple 公证；之后的发行包一律用 Developer ID 签名并经 Apple 公证、装订票据，下载后直接打开，不需要下面的步骤。对 1.1.3 (37)：若首次打开被系统阻止，先尝试打开，再到「系统设置 → 隐私与安全性」点「仍要打开」。来源确认可信但仍显示损坏时，可在终端执行：
 
 ```sh
 xattr -cr "/Applications/DocKit.app"
@@ -71,7 +71,11 @@ python3 scripts/verify-package.py
 bash scripts/check-ui-state.sh
 ```
 
-产物：`build/DocKit.app`、`dist/DocKit-v1.1.3-arm64.zip` 和 `dist/release-manifest.json`。构建不自动替换本机安装版。文档引擎和受支持格式的依赖在 `Contents/Resources`，没有对作者工作区的运行时依赖。
+产物：`build/DocKit.app`、`dist/DocKit-v1.1.3-arm64.zip` 和 `dist/release-manifest.json`。构建不自动替换本机安装版。
+
+签名分两种，`scripts/package.py` 按本机钥匙串自动选：有 Developer ID Application 证书时，应用和包内运行时的每个可执行文件、动态库都用它签名，带 hardened runtime 和安全时间戳，这是发行构建；没有证书时为 ad-hoc 签名，只供本机试用（别的 Mac 上 Gatekeeper 会拒绝）。多张证书时用 `DOCKIT_SIGN_IDENTITY` 指定，`DOCKIT_SIGN_IDENTITY=-` 强制 ad-hoc。用证书签名要在登录会话里做，纯 SSH 里钥匙串打不开。
+
+装进「应用程序」只接受任何一台 Mac 都能直接运行的包：`bash build.sh --install` 在构建后依次运行 `scripts/notarize.py`（提交 Apple 公证、装订票据、用 `stapler validate` 与 `spctl` 复核，并用装订后的应用重出压缩包和清单）与 `scripts/install.py`（复核后替换已装版本，旧版进废纸篓，再让装好的应用回答一次 `status`）。ad-hoc、Apple Development 签名、未公证或带设备清单描述文件的包，两步都会拒绝。另一台 Mac 装同一份包：`python3 scripts/install.py --archive DocKit-v1.1.3-arm64.zip`。公证凭据从 `DOCKIT_NOTARY_PROFILE`，或 `NOTARY_KEY`、`NOTARY_KEY_ID`、`NOTARY_ISSUER` 读取；公证只是把包提交给 Apple 检查，不等于发布。`DOCKIT_OUT=目录` 让应用、压缩包和清单都落在该目录，不动 `dist/`。文档引擎和受支持格式的依赖在 `Contents/Resources`，没有对作者工作区的运行时依赖。
 
 编译默认使用本机核数，可用 `DOCKIT_BUILD_JOBS` 调整。包验证默认按核数并行执行独立用例，每个用例使用自己的输出目录；依赖 LibreOffice 的老格式转换串行执行，可用 `verify-package.py --jobs N` 调整并行数。界面状态、偏好和生命周期测试并行运行。验证独立构建时传 `verify-package.py --app /绝对路径/DocKit.app`，状态与固定验收脚本传 `DOCKIT_APP=/绝对路径/DocKit.app`。
 
@@ -83,7 +87,7 @@ bash scripts/check-ui-state.sh
 
 `VERSION` 是版本源，`scripts/package.py` 从实际安装包生成哈希与发行清单。`scripts/build-site.py` 生成 `build/site/` 与显式公开白名单 `site-manifest.json`；`--preview` 仅供本地预览，正式构建必须有匹配版本的真实媒体。
 
-`python3 scripts/publish.py` 构建并验证新发行与网站。录制验收后，`python3 scripts/publish.py --upload` 直接消费已准备的 dist 安装包，检查哈希、包内签名、真实版本/build 与媒体对应关系，不再重新编译。上传要求工作树干净且提交已推送；Release 指向安装包清单中的二进制源提交，已有同名 Release 会拒绝覆盖。网站包交给现有部署入口消费，发布脚本不更改服务器配置。真实录制要求见 `docs/demo/plan.md`，原片留在 gitignored build/tutorial/raw/。
+`python3 scripts/publish.py` 构建并验证新发行与网站，验证通过后公证并装订；没有 Developer ID 证书或公证未通过就停下。录制验收后，`python3 scripts/publish.py --upload` 直接消费已准备的 dist 安装包，检查哈希、包内签名、真实版本/build 与媒体对应关系，并要求包是已公证装订的 Developer ID 包（ad-hoc 包不上传），不再重新编译。上传要求工作树干净且提交已推送；Release 指向安装包清单中的二进制源提交，已有同名 Release 会拒绝覆盖。网站包交给现有部署入口消费，发布脚本不更改服务器配置。真实录制要求见 `docs/demo/plan.md`，原片留在 gitignored build/tutorial/raw/。
 
 ## 许可
 
@@ -91,4 +95,4 @@ bash scripts/check-ui-state.sh
 
 ## English
 
-DocKit is a native macOS document toolbox for Chinese typography, conversion, splitting and merging. It works on copies and preserves your original files. The release bundles its Python runtime and document dependencies, so supported local operations need no account, uv or Python installation. Requires Apple Silicon and macOS 15+. The current build is ad-hoc signed and not notarized. See the product website for installation, real demonstrations and supported formats.
+DocKit is a native macOS document toolbox for Chinese typography, conversion, splitting and merging. It works on copies and preserves your original files. The release bundles its Python runtime and document dependencies, so supported local operations need no account, uv or Python installation. Requires Apple Silicon and macOS 15+. The downloadable 1.1.3 (37) is ad-hoc signed and not notarized; later releases are Developer ID signed and notarized. See the product website for installation, real demonstrations and supported formats.
