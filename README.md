@@ -85,7 +85,7 @@ bash scripts/check-ui-state.sh
 
 ## 网站和发布
 
-`VERSION` 是版本源，`scripts/package.py` 从实际安装包生成哈希与发行清单。`scripts/build-site.py` 生成 `build/site/` 与显式公开白名单 `site-manifest.json`；`--preview` 仅供本地预览，正式构建必须有匹配版本的真实媒体。
+`VERSION` 是版本源，`scripts/package.py` 从实际安装包生成哈希与发行清单。`scripts/build-site.py` 生成 `build/site/` 与显式公开白名单 `site-manifest.json`；下载按钮从发行清单生成对应版本的 GitHub Release 页，校验链接指向该 Release 的 `release-manifest.json`。网站不复制或提供安装包备用，教程示例文件与视频照常保留；`--preview` 仅供本地预览，正式构建必须有匹配版本的真实媒体。重建后运行 `python3 tests/test_site_downloads.py` 核对下载入口及站点白名单。
 
 `python3 scripts/publish.py` 构建并验证新发行与网站，验证通过后公证并装订；没有 Developer ID 证书或公证未通过就停下。录制验收后，`python3 scripts/publish.py --upload` 直接消费已准备的 dist 安装包，检查哈希、包内签名、真实版本/build 与媒体对应关系，并要求包是已公证装订的 Developer ID 包（ad-hoc 包不上传），不再重新编译。上传要求工作树干净且提交已推送；Release 指向安装包清单中的二进制源提交，已有同名 Release 会拒绝覆盖。网站包交给现有部署入口消费，发布脚本不更改服务器配置。真实录制要求见 `docs/demo/plan.md`，原片留在 gitignored build/tutorial/raw/。
 

@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import sys
+from urllib.parse import unquote, urlsplit, urlunsplit
 sys.path.insert(0, str(Path.home() / "Apps/apps-portal/site"))
 import perf_block  # shared lightweight block; numbers come from perf/lightweight.json
 import product_facts  # facts.json published with the page for the portal and Chapter
@@ -18,8 +19,18 @@ ROOT=Path(__file__).resolve().parents[1]
 ap=argparse.ArgumentParser();ap.add_argument("--preview",action="store_true")
 ap.add_argument("--out",type=Path,default=ROOT/"build/site",help="Site package root (default build/site)");a=ap.parse_args()
 release=json.loads((ROOT/"dist/release-manifest.json").read_text())
+download=urlsplit(release["download_url"])
+parts=download.path.split("/")
+if (download.scheme!="https" or download.netloc!="github.com" or download.query or download.fragment
+    or len(parts)!=7 or not all(parts[1:3]) or parts[3:5]!=["releases","download"]
+    or unquote(parts[5])!=release["tag"] or unquote(parts[6])!=release["filename"]
+    or release["tag"]!="v"+release["version"]):
+    raise SystemExit("Release download URL does not match its GitHub repository, tag and filename")
+release_url=urlunsplit((download.scheme,download.netloc,"/".join(parts[:4]+["tag",parts[5]]),"",""))
+checksum_url=urlunsplit((download.scheme,download.netloc,"/".join(parts[:-1]+["release-manifest.json"]),"",""))
 archive=ROOT/"dist"/release["filename"]
 assert hashlib.sha256(archive.read_bytes()).hexdigest()==release["sha256"],"Release archive hash mismatch"
+if archive.stat().st_size!=release["bytes"]: raise SystemExit("Release archive size mismatch")
 def ui_sources_sha256(source_commit=None):
     """Hash the UI of the published archive, rather than a newer working checkout."""
     h=hashlib.sha256()
@@ -71,8 +82,7 @@ if out.exists(): shutil.rmtree(out)
 (out/"images").mkdir(parents=True);(out/"downloads").mkdir();(out/"media").mkdir()
 shutil.copy2(ROOT/"icon/AppIcon.png",out/"images/icon.png")
 shutil.copy2(ROOT/"site/style.css",out/"style.css")
-shutil.copy2(archive,out/"downloads"/archive.name)
-shutil.copy2(ROOT/"dist/release-manifest.json",out/"downloads/release-manifest.json")
+# Installers and their release record stay on GitHub; downloads/ only holds tutorial samples.
 fixtures=ROOT/"build/demo-inputs"
 python=ROOT/"build/DocKit.app/Contents/Resources/python/bin/python3.12"
 subprocess.run([str(python),"-B",str(ROOT/"scripts/make-demo.py"),str(fixtures)],check=True,capture_output=True)
@@ -112,7 +122,8 @@ if measured_build!=released_build and not historical:
                         "，下列数据不代表已发布包。</p><div class='perf-grid'>",1)
 if historical:
     block=block.replace("资源占用与响应速度。",f"历史实测 · v{measured_version}。").replace("数字来自所列设备实测，版本更新后重新测量。",f"以下为 v{measured_version} 的历史实测，不代表当前 v{release['version']}；本轮未重复采样。")
-replacements={"VERSION":release["version"],"FILENAME":archive.name,"DOWNLOAD":"downloads/"+archive.name,
+replacements={"VERSION":release["version"],"FILENAME":archive.name,"DOWNLOAD":html.escape(release_url,quote=True),
+              "CHECKSUM":html.escape(checksum_url,quote=True),
               "SIZE":perf_block.size_mb(release["bytes"]),"LIGHT":block,"SCREENSHOT":shot,"VIDEOS":"".join(videos),"TUTORIAL":tutorial}
 page=(ROOT/"site/index.html").read_text()
 for key,value in replacements.items(): page=page.replace("{{"+key+"}}",value)
