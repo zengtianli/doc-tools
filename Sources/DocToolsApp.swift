@@ -159,6 +159,7 @@ enum DocKitMain {
         // Command words (DocKitCLI.swift): `status`, `settings`, `config …`, `update check | install`, `help`.
         // Answered here, before any NSApplication exists — no window, no Dock icon, no focus change.
         let words = Array(CommandLine.arguments.dropFirst())
+        if words.contains("--product-basics-self-test") { ProductBasicsSelfTest.runAndExit() }
         if DocKitCLI.handles(words.first) { exit(DocKitCLI.run(words)) }
         if let index = words.firstIndex(of: Lifecycle.probeFlag) {
             // Test-only: this executable as the running app, off screen, in an isolated run.
@@ -231,16 +232,7 @@ struct DocToolsApp: App {
             CommandGroup(replacing: .help) {
                 Link("DocKit 使用教程", destination: URL(string: "https://app-mac-doctools.tianli.cyou/#install")!)
             }
-            CommandMenu("操作") {
-                Button("搜索功能…") {
-                    NotificationCenter.default.post(name: .tlPaletteToggle, object: nil)
-                }
-                .keyboardShortcut("k", modifiers: .command)   // ⌘K command palette
-                Button("刷新") {
-                    NotificationCenter.default.post(name: .consoleRefresh, object: nil)
-                }
-                .keyboardShortcut("r", modifiers: .command)
-            }
+            // The shared AppShortcuts adapter owns the configurable refresh item and product palette action.
         }
     }
 }

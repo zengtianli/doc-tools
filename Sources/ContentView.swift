@@ -132,7 +132,7 @@ struct ContentView: View {
                 Button { Task { await vm.loadOps() } } label: {
                     Label("刷新", systemImage: "arrow.clockwise")
                 }
-                .help("重读操作列表（⌘R）")
+                .help("重读操作列表（快捷键可在配置与更新中修改）")
                 .disabled(vm.isLoadingOps || vm.isRunning)
             }
         }

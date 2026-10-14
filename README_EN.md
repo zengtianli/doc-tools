@@ -2,6 +2,8 @@
 
 The app menu offers configuration import/export, optional iCloud sync (off by default), and update checks. It remembers the last operation and target formats; rule toggles, file paths, documents and task history are excluded. Update checks query this product's GitHub releases without sending document content.
 
+The native configuration and update window lets you save, disable and restore the refresh shortcut (⌘R by default, within this app). ⌘K search, ⌘↩ execution and standard editing shortcuts remain available; conflicting combinations leave the previous binding intact. Optional iCloud configuration sync includes the refresh binding and update preferences. Automatic update checks, downloads and installation have separate options, disabled by default.
+
 [中文](README.md) | **English**
 
 Local document tools for Mac: standardize Chinese quotation marks, clean up punctuation and units, convert formats, and split or merge files. Originals are preserved, and results are listed for each file.

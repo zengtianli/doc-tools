@@ -33,7 +33,13 @@ import SwiftUI
 enum Lifecycle {
     static let name = "DocKit"
     static let productID = "io.github.zengtianli.DocTools"
-    static let updateSource: AppUpdateSource = .github(repository: "zengtianli/doc-tools")
+    static var updateSource: AppUpdateSource {
+        // A frozen fixture channel is accepted only together with the existing complete isolation contract.
+        if isolated, store() != nil, ProcessInfo.processInfo.environment["DOCKIT_TEST_UPDATE_CHANNEL"] == "isolated" {
+            return .privateCloud(channel: "isolated")
+        }
+        return .github(repository: "zengtianli/doc-tools")
+    }
     static let probeFlag = "--lifecycle-follow-probe"
     static let suiteVariable = "DOCKIT_LIFECYCLE_SUITE"
     static let refusal = "APP_LIFECYCLE_SUPPORT_DIR is set (an isolated run): \(suiteVariable) must name a throwaway preferences domain too, so the run never reaches your own settings."
@@ -58,13 +64,14 @@ enum Lifecycle {
             // falling into the launcher's own.
             return UserDefaults(suiteName: productID).map { ($0, productID) }
         }
-        guard let suite = ProcessInfo.processInfo.environment[suiteVariable], !suite.isEmpty, suite != productID,
-              let defaults = UserDefaults(suiteName: suite) else { return nil }
-        return (defaults, suite)
+        guard let suite = ProcessInfo.processInfo.environment[suiteVariable], !suite.isEmpty, suite != productID else { return nil }
+        // Foundation rejects suiteName equal to the executing bundle ID; a re-identified private copy owns .standard.
+        if suite == Bundle.main.bundleIdentifier { return (.standard, suite) }
+        return UserDefaults(suiteName: suite).map { ($0, suite) }
     }
 
     static func makeConfiguration(_ defaults: UserDefaults) -> AppConfiguration {
-        AppConfiguration(productID: productID, defaultsKeys: AppViewModel.portablePreferenceKeys, defaults: defaults)
+        AppConfiguration(productID: productID, defaultsKeys: AppViewModel.portablePreferenceKeys + AppShortcuts.portableKeys + ["appUpdateOptions"], defaults: defaults)
     }
 
     static func product(_ defaults: UserDefaults) -> AppLifecycleCLI.Product {
@@ -78,8 +85,11 @@ enum Lifecycle {
     @discardableResult
     static func installApp(_ defaults: UserDefaults = .standard) -> AppConfiguration {
         let configuration = makeConfiguration(defaults)
+        let settings = DocKitSettings(defaults: defaults)
+        settings.install()
         configuration.onChange = {
             NotificationCenter.default.post(name: .dockitPreferencesChanged, object: nil)
+            DocKitSettings.current?.refresh()
         }
         AppLifecycleUI.install(name: name, configuration: configuration, updateSource: updateSource)
         AppLifecycleCLI.follow(configuration, bundle: bundle)
@@ -96,7 +106,7 @@ enum DocKitCLI {
         return "DocTools"
     }()
 
-    nonisolated private static let own = ["status", "settings", "help", "--help", "-h"]
+    nonisolated private static let own = ["status", "settings", "shortcuts", "help", "--help", "-h"]
     nonisolated static func handles(_ word: String?) -> Bool {
         guard let word else { return false }
         return own.contains(word) || AppLifecycleCLI.handles(word)
@@ -111,10 +121,13 @@ enum DocKitCLI {
         读命令（不写任何文件或状态）:
           status                     版本与构建号、状态行（已就绪 / 文档引擎未就绪）、记住的上次操作与各操作的目标格式、窗口是否在运行
           settings                   记住的上次操作与各操作的目标格式
+          shortcuts [status]         刷新快捷键状态、组合与应用内生效范围
         \(AppLifecycleCLI.helpRead(name))
 
         写命令:
           settings set <键> <值>      改记住的设置：last_operation <op> 或 target_formats.<op> <目标>；值先按操作目录核对，窗口下次打开时按它选中
+          shortcuts on | off         启用/关闭刷新按键，保留组合
+          shortcuts set <字母> [command|shift|option|control]  保存组合；系统保留键和 ⌘K 被拒绝
         \(AppLifecycleCLI.helpWrite(name))
 
         --json 输出形状（每条命令一个 JSON 对象）:
@@ -159,6 +172,27 @@ enum DocKitCLI {
             }
             let body: [String: Any], text: String
             switch (verb, positionals.first) {
+            case ("shortcuts", _):
+                let application = NSApplication.shared
+                application.setActivationPolicy(.prohibited)
+                let settings = DocKitSettings(defaults: store.defaults)
+                switch positionals.first ?? "status" {
+                case "status":
+                    guard positionals.count <= 1 else { throw Failure.usage("shortcuts status 不接受其他参数") }
+                case "on", "off":
+                    guard positionals.count == 1 else { throw Failure.usage("shortcuts on|off 不接受其他参数") }
+                    settings.shortcuts.setEnabled(positionals[0] == "on")
+                case "set":
+                    guard (2...3).contains(positionals.count) else { throw Failure.usage("shortcuts set <字母> [command|shift|option|control]") }
+                    let name = positionals.count == 3 ? positionals[2] : "command"
+                    let flags: [String: NSEvent.ModifierFlags] = ["command": .command, "shift": [.shift, .command], "option": [.option, .command], "control": [.control, .command]]
+                    guard let modifiers = flags[name] else { throw Failure.usage("未知修饰键 \(name)") }
+                    try settings.setBinding(key: positionals[1].lowercased(), modifiers: modifiers)
+                default: throw Failure.usage("shortcuts status|on|off|set")
+                }
+                body = ["enabled": settings.shortcuts.enabled, "binding": settings.shortcuts.binding.dictionary,
+                        "scope": "application", "description": settings.shortcuts.descriptionText]
+                text = settings.shortcuts.descriptionText
             case ("status", nil):
                 (body, text) = status(store)
             case ("settings", nil):

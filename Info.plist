@@ -28,6 +28,7 @@
 	<array>
 		<string>status</string>
 		<string>settings</string>
+		<string>shortcuts</string>
 		<string>config</string>
 		<string>update</string>
 		<string>help</string>
