@@ -79,6 +79,8 @@ bash scripts/check-ui-state.sh
 
 装进「应用程序」只接受任何一台 Mac 都能直接运行的包：`bash build.sh --install` 在构建后依次运行 `scripts/notarize.py`（提交 Apple 公证、装订票据、用 `stapler validate` 与 `spctl` 复核，并用装订后的应用重出压缩包和清单）与 `scripts/install.py`（复核后替换已装版本，旧版进废纸篓，再让装好的应用回答一次 `status`）。ad-hoc、Apple Development 签名、未公证或带设备清单描述文件的包，两步都会拒绝。另一台 Mac 装同一份包：`python3 scripts/install.py --archive DocKit-v1.1.3-arm64.zip`。公证凭据从 `DOCKIT_NOTARY_PROFILE`，或 `NOTARY_KEY`、`NOTARY_KEY_ID`、`NOTARY_ISSUER` 读取；公证只是把包提交给 Apple 检查，不等于发布。`DOCKIT_OUT=目录` 让应用、压缩包和清单都落在该目录，不动 `dist/`。文档引擎和受支持格式的依赖在 `Contents/Resources`，没有对作者工作区的运行时依赖。
 
+本人明确授权的本机迭代使用独立入口 `bash build.sh --install-local`：只做编译、稳定 Developer ID 签名和可回滚替换，不公证、不发布；包内代码必须通过共享签名闸，开发者团队和 designated requirement 必须与已装版一致，ad-hoc 和 Apple Development 不能替换正式运行版。产物默认在 `build/local-install/`，原发行目录不动。证书在配对 Mac 时加 `DOCKIT_SIGN_HOST=macbook`，经原登录会话签名入口只签冻结包；不转移私钥，也不在对端重建或安装。分发仍走前述公证入口。
+
 编译默认使用本机核数，可用 `DOCKIT_BUILD_JOBS` 调整。包验证默认按核数并行执行独立用例，每个用例使用自己的输出目录；依赖 LibreOffice 的老格式转换串行执行，可用 `verify-package.py --jobs N` 调整并行数。界面状态、偏好和生命周期测试并行运行。验证独立构建时传 `verify-package.py --app /绝对路径/DocKit.app`，状态与固定验收脚本传 `DOCKIT_APP=/绝对路径/DocKit.app`。
 
 打包时 `scripts/slim-runtime.py` 去掉运行时用不到的部分（magika/onnxruntime、各包测试目录、Tk 等；仍被导入的模块会让构建失败），并为各项操作用到的模块预编译 unchecked-hash 的 `.pyc`。Python 不会拿这些 `.pyc` 与 `.py` 比对，所以直接修改构建好的 `DocKit.app` 里的 `.py` 不会触发重新编译，仍运行旧字节码；改后端请改源码后重新构建。

@@ -26,32 +26,47 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument("--out", type=Path, help="write app, archive and manifest here instead of build/ and dist/")
-out = parser.parse_args().out
+parser.add_argument("--sign-existing", action="store_true", help="sign the frozen app/manifest in --out on the certificate host, without rebuilding")
+args = parser.parse_args()
+out = args.out
 out = (ROOT / out).resolve() if out and not out.is_absolute() else out
-version = (ROOT / "VERSION").read_text().strip()
 app = (out or ROOT / "build") / "DocKit.app"
-if app.exists(): shutil.rmtree(app)
 resources = app / "Contents/Resources"
-(app / "Contents/MacOS").mkdir(parents=True)
-resources.mkdir()
 executable = app / "Contents/MacOS/DocTools"
-shutil.copy2(ROOT / "build/DocTools", executable)
+if args.sign_existing:
+    if out is None: parser.error("--sign-existing requires --out")
+    frozen = json.loads((out / "release-manifest.json").read_text())
+    info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
+    version = frozen["version"]
+    if ((info["CFBundleIdentifier"], info["CFBundleShortVersionString"], info["CFBundleVersion"])
+        != (frozen["bundle_id"], version, frozen["build"])
+        or frozen["bundle_id"] != "io.github.zengtianli.DocTools"
+        or Path(frozen["filename"]).name != frozen["filename"]
+        or hashlib.sha256(executable.read_bytes()).hexdigest() != frozen["source_executable_sha256"]
+        or hashlib.sha256((out / frozen["filename"]).read_bytes()).hexdigest() != frozen["sha256"]):
+        sys.exit("package: frozen app/archive/manifest mismatch; no signing performed")
+else:
+    version = (ROOT / "VERSION").read_text().strip()
+    if app.exists(): shutil.rmtree(app)
+    (app / "Contents/MacOS").mkdir(parents=True)
+    resources.mkdir()
+    shutil.copy2(ROOT / "build/DocTools", executable)
 # Release strip: drop the executable's local symbols (build/DocTools keeps them); exported and
 # undefined symbols stay, so nothing changes at run time. swiftc runs without -g, so there is no
 # debug map to remove. The bundled runtime is stripped by slim-runtime.py; everything is signed below.
-subprocess.run(["strip", "-x", str(executable)], check=True)
-shutil.copy2(ROOT / "icon/AppIcon.icns", resources / "AppIcon.icns")
-shutil.copytree(ROOT / "backend", resources / "backend", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-shutil.copytree(ROOT / "build/runtime/python", resources / "python", symlinks=True)
-for name in ("LICENSE", "THIRD-PARTY-NOTICES.md"): shutil.copy2(ROOT / name, resources / name)
-# Ship only what the operations run: see scripts/slim-runtime.py for every rule and its guard.
-subprocess.run([sys.executable, str(ROOT / "scripts/slim-runtime.py"), str(resources)], check=True)
-shutil.copytree(ROOT / "third-party", resources / "licenses")
-info = plistlib.loads((ROOT / "Info.plist").read_bytes())
-info.update(CFBundleName="DocKit", CFBundleDisplayName="DocKit", CFBundleShortVersionString=version,
-            CFBundleVersion=subprocess.check_output(["git", "rev-list", "--count", "HEAD"], cwd=ROOT, text=True).strip(),
-            NSHumanReadableCopyright="DocKit · MIT License")
-(app / "Contents/Info.plist").write_bytes(plistlib.dumps(info))
+if not args.sign_existing:
+    subprocess.run(["strip", "-x", str(executable)], check=True)
+    shutil.copy2(ROOT / "icon/AppIcon.icns", resources / "AppIcon.icns")
+    shutil.copytree(ROOT / "backend", resources / "backend", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    shutil.copytree(ROOT / "build/runtime/python", resources / "python", symlinks=True)
+    for name in ("LICENSE", "THIRD-PARTY-NOTICES.md"): shutil.copy2(ROOT / name, resources / name)
+    subprocess.run([sys.executable, str(ROOT / "scripts/slim-runtime.py"), str(resources)], check=True)
+    shutil.copytree(ROOT / "third-party", resources / "licenses")
+    info = plistlib.loads((ROOT / "Info.plist").read_bytes())
+    info.update(CFBundleName="DocKit", CFBundleDisplayName="DocKit", CFBundleShortVersionString=version,
+                CFBundleVersion=subprocess.check_output(["git", "rev-list", "--count", "HEAD"], cwd=ROOT, text=True).strip(),
+                NSHumanReadableCopyright="DocKit · MIT License")
+    (app / "Contents/Info.plist").write_bytes(plistlib.dumps(info))
 magics = {b"\xcf\xfa\xed\xfe", b"\xce\xfa\xed\xfe", b"\xca\xfe\xba\xbe", b"\xfe\xed\xfa\xcf"}
 def local_symbols(path):
     # nm's type letter is column 18 (symbol names may contain spaces); t/d/b/s are local symbols.
@@ -67,8 +82,11 @@ def signing_identity():
     return found[0] if found else "-"
 identity = signing_identity()
 distribution = identity != "-"
+if args.sign_existing and not identity.startswith("Developer ID Application:"):
+    sys.exit("package: signing continuation requires a Developer ID Application certificate")
 # Notarization requires the hardened runtime and a secure timestamp on every executable and library.
 sign = ["codesign", "--force", "--sign", identity] + (["--options", "runtime", "--timestamp"] if distribution else [])
+if args.sign_existing: sign += ["--preserve-metadata=identifier,entitlements"]
 def codesign(path):
     done = subprocess.run(sign + [str(path)], capture_output=True, text=True)
     if done.returncode:
@@ -102,7 +120,7 @@ dist.mkdir(parents=True, exist_ok=True)
 archive = dist / f"DocKit-v{version}-arm64.zip"
 if archive.exists(): archive.unlink()
 subprocess.run(["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", str(app), str(archive)], check=True)
-manifest = {"product": "DocKit", "version": version, "tag": "v"+version, "bundle_id": info["CFBundleIdentifier"],
+manifest = frozen if args.sign_existing else {"product": "DocKit", "version": version, "tag": "v"+version, "bundle_id": info["CFBundleIdentifier"],
             "build": info["CFBundleVersion"],
             "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
             "source_dirty": bool(subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT, text=True).strip()),
@@ -112,5 +130,9 @@ manifest = {"product": "DocKit", "version": version, "tag": "v"+version, "bundle
             "signing": f"{identity}; hardened runtime; not yet notarized (run scripts/notarize.py)" if distribution else "ad-hoc; not notarized; local trial only",
             "signed_files": len(nested) + 1, "runtime": "bundled CPython 3.12.13",
             "download_url": f"https://github.com/zengtianli/doc-tools/releases/download/v{version}/{archive.name}"}
+if args.sign_existing:
+    manifest.update(source_executable_sha256=hashlib.sha256(executable.read_bytes()).hexdigest(),
+                    bytes=archive.stat().st_size, sha256=hashlib.sha256(archive.read_bytes()).hexdigest(),
+                    signing=f"{identity}; hardened runtime; not notarized; local iteration", signed_files=len(nested)+1)
 (dist / "release-manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+"\n")
 print(json.dumps(manifest, ensure_ascii=False, indent=2))
