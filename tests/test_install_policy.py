@@ -2,6 +2,7 @@
 import importlib.util
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -13,6 +14,12 @@ spec.loader.exec_module(installer)
 
 
 class InstallPolicy(unittest.TestCase):
+    def test_requirement_readback_accepts_codesign_stdout(self):
+        outputs = [subprocess.CompletedProcess([], 0, "", "TeamIdentifier=B9LJH93LA4\n"),
+                   subprocess.CompletedProcess([], 0, 'designated => identifier "io.github.zengtianli.DocTools"\n', "Executable=/app\n")]
+        with patch.object(installer.subprocess, "run", side_effect=outputs):
+            self.assertEqual(installer.signing_identity(Path("app")), ("B9LJH93LA4", 'identifier "io.github.zengtianli.DocTools"'))
+
     def test_distribution_still_requires_notarization(self):
         with patch.object(installer.notarize, "notarized", return_value=["no stapled ticket"]) as gate:
             self.assertEqual(installer.policy_problems(Path("app"), None, local=False), ["no stapled ticket"])

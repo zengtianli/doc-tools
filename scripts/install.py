@@ -54,7 +54,8 @@ def destination() -> Path:
 
 def signing_identity(app: Path) -> tuple[str, str]:
     detail = subprocess.run(["codesign", "-dvv", str(app)], capture_output=True, text=True, check=True).stderr
-    required = subprocess.run(["codesign", "-d", "-r-", str(app)], capture_output=True, text=True, check=True).stderr
+    response = subprocess.run(["codesign", "-d", "-r-", str(app)], capture_output=True, text=True, check=True)
+    required = response.stdout + response.stderr
     team = re.search(r"^TeamIdentifier=([A-Z0-9]+)$", detail, re.M)
     requirement = re.search(r"^designated => (.+)$", required, re.M)
     if not team or not requirement: raise ValueError("Signature has no stable team/designated requirement")
