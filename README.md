@@ -22,7 +22,7 @@ SwiftUI 界面；文档处理靠包内 Python 3.12，只在启动读操作列表
 <sub>v1.1.3 (39) · Mac16,12 / Apple M4 / macOS 27.2 · 静默只读加载包内真实操作目录并离屏绘制初始界面；输入文件为空，不处理文档，不写本人偏好。 · 2026-10-05。数字来自所列版本与设备的测量记录；当前版本与测量范围以本页说明为准。内存口径为 phys_footprint；CPU 为 60 秒采样窗内 CPU 时间 ÷ 墙钟；大小按十进制 MB。原始数据见 [perf/lightweight.json](perf/lightweight.json)。</sub>
 <!-- lightweight:end -->
 
-以上是本地验收构建 **1.1.3 (39)** 的实测，公开下载仍为 **1.1.3 (37)**；两份构建分别标注，不把本地样本当作已发布包的性能。
+以上是本地验收构建 **1.1.3 (39)** 的历史实测；当前发行版本与安装包校验见 GitHub Release，这些样本不代表后续发行包的性能。
 
 ## 安装
 
@@ -81,7 +81,7 @@ bash scripts/check-ui-state.sh
 
 本人明确授权的本机迭代使用独立入口 `bash build.sh --install-local`：只做编译、稳定 Developer ID 签名和可回滚替换，不公证、不发布；包内代码必须通过共享签名闸，开发者团队和 designated requirement 必须与已装版一致，ad-hoc 和 Apple Development 不能替换正式运行版。产物默认在 `build/local-install/`，原发行目录不动。证书在配对 Mac 时加 `DOCKIT_SIGN_HOST=macbook`，经原登录会话签名入口只签冻结包；不转移私钥，也不在对端重建或安装。分发仍走前述公证入口。
 
-编译默认使用本机核数，可用 `DOCKIT_BUILD_JOBS` 调整。包验证默认按核数并行执行独立用例，每个用例使用自己的输出目录；依赖 LibreOffice 的老格式转换串行执行，可用 `verify-package.py --jobs N` 调整并行数。界面状态、偏好和生命周期测试并行运行。验证独立构建时传 `verify-package.py --app /绝对路径/DocKit.app`，状态与固定验收脚本传 `DOCKIT_APP=/绝对路径/DocKit.app`。
+编译默认使用本机核数，可用 `DOCKIT_BUILD_JOBS` 调整。包验证默认按核数并行执行独立用例，每个用例使用自己的输出目录；依赖 LibreOffice 的老格式转换串行执行，可用 `verify-package.py --jobs N` 调整并行数。界面状态、偏好和生命周期测试顺序编译执行。验证独立构建时传 `verify-package.py --app /绝对路径/DocKit.app`，状态与固定验收脚本传 `DOCKIT_APP=/绝对路径/DocKit.app`。
 
 打包时 `scripts/slim-runtime.py` 去掉运行时用不到的部分（magika/onnxruntime、各包测试目录、Tk 等；仍被导入的模块会让构建失败），并为各项操作用到的模块预编译 unchecked-hash 的 `.pyc`。Python 不会拿这些 `.pyc` 与 `.py` 比对，所以直接修改构建好的 `DocKit.app` 里的 `.py` 不会触发重新编译，仍运行旧字节码；改后端请改源码后重新构建。
 

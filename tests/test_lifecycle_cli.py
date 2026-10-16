@@ -207,7 +207,7 @@ class CommandWordTests(unittest.TestCase):
         """Info.plist's DocKitCommandVerbs is what a wrapper reads before forwarding a word (a word the build
         does not know would open the window). Every listed word must be answered without one."""
         listed = plistlib.loads((ROOT / 'Info.plist').read_bytes())['DocKitCommandVerbs']
-        self.assertEqual(sorted(listed), ['config', 'help', 'settings', 'status', 'update'])
+        self.assertEqual(sorted(listed), ['config', 'help', 'settings', 'shortcuts', 'status', 'update'])
         for word in listed:
             done = self.dockit(word, '--help')
             self.assertEqual((done.returncode, done.stderr), (0, ''), word)

@@ -169,12 +169,12 @@ run_op merge-md      --op merge   --files "$IN/读书会流程.md" "$IN/补充�
 GUARD_OPS=$OPS_DONE
 
 # Guard self-test: prove the hook is loaded and actually blocks (in a child process too).
-selftest=$(env -i PATH=/usr/bin:/bin HOME="$FAKE_HOME" PYTHONPATH="$GUARD" DOCKIT_GUARD_LOG="$WORK/selftest.jsonl" "$PY" -s -B -c '
+selftest=$(env -i PATH=/usr/bin:/bin HOME="$FAKE_HOME" PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$GUARD" DOCKIT_GUARD_LOG="$WORK/selftest.jsonl" "$PY" -s -B -c '
 import socket, subprocess, sys
 try:
     socket.create_connection(("1.1.1.1", 443), timeout=2); print("CONNECTED")
 except OSError as e: print("blocked" if "privacy guard" in str(e) else "other:"+str(e))
-print(subprocess.run([sys.executable, "-c", "import socket\ntry:\n socket.getaddrinfo(\"example.com\",443);print(\"RESOLVED\")\nexcept OSError as e: print(\"blocked\" if \"privacy guard\" in str(e) else \"other\")"], capture_output=True, text=True).stdout.strip())')
+print(subprocess.run([sys.executable, "-B", "-c", "import socket\ntry:\n socket.getaddrinfo(\"example.com\",443);print(\"RESOLVED\")\nexcept OSError as e: print(\"blocked\" if \"privacy guard\" in str(e) else \"other\")"], capture_output=True, text=True).stdout.strip())')
 [ "$selftest" = $'blocked\nblocked' ] || fail "网络拦截自检失败: $selftest"
 
 # ───────────────────────── optional sandbox-exec layer (kernel-level, covers non-Python helpers)

@@ -12,27 +12,19 @@ trap 'rm -rf "$TMP"' EXIT
 APP="${DOCKIT_APP:-$DIR/build/DocKit.app}"
 PY="$APP/Contents/Resources/python/bin/python3.12"
 "$PY" -B scripts/make-demo.py "$TMP/Inputs"
-# Independent checks use separate executables, outputs and disposable preference domains.
-# Split compiler jobs across the three concurrent checks instead of serializing them.
+# Keep SDK compilation sequential inside Chapter's original build lane.
 JOBS="${DOCKIT_BUILD_JOBS:-$(sysctl -n hw.ncpu)}"
-CHECK_JOBS=$(( JOBS / 3 ))
-[ "$CHECK_JOBS" -ge 1 ] || CHECK_JOBS=1
+CHECK_JOBS="$JOBS"
+RC=0
 (
   xcrun swiftc -j "$CHECK_JOBS" -parse-as-library Sources/Models.swift Sources/BackendClient.swift Sources/ViewModel.swift tests/StateCheck.swift -o "$TMP/state-check"
   DOCKIT_OUTPUT_DIR="$TMP/Outputs" "$TMP/state-check" "$APP/Contents/Resources/backend/doc_gui_backend.py" "$TMP/Inputs/活动说明.docx"
-) >"$TMP/state.log" 2>&1 &
-STATE_PID=$!
+) >"$TMP/state.log" 2>&1 || RC=1
 (
   xcrun swiftc -j "$CHECK_JOBS" -parse-as-library Sources/Models.swift Sources/BackendClient.swift Sources/ViewModel.swift tests/PreferencesCheck.swift -o "$TMP/preferences-check"
   "$TMP/preferences-check"
-) >"$TMP/preferences.log" 2>&1 &
-PREFERENCES_PID=$!
+) >"$TMP/preferences.log" 2>&1 || RC=1
 # Command words and the running app are exercised off screen with temporary settings.
-DOCKIT_BUILD_JOBS="$CHECK_JOBS" bash scripts/accept/lifecycle.sh >"$TMP/lifecycle.log" 2>&1 &
-LIFECYCLE_PID=$!
-RC=0
-wait "$STATE_PID" || RC=1
-wait "$PREFERENCES_PID" || RC=1
-wait "$LIFECYCLE_PID" || RC=1
+DOCKIT_BUILD_JOBS="$CHECK_JOBS" bash scripts/accept/lifecycle.sh >"$TMP/lifecycle.log" 2>&1 || RC=1
 cat "$TMP/state.log" "$TMP/preferences.log" "$TMP/lifecycle.log"
 exit "$RC"

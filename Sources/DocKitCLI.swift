@@ -420,7 +420,9 @@ enum LifecycleProbe {
     private static func cloudSwitch(in view: NSView?) -> NSControl? {
         guard let view else { return nil }
         if let button = view as? NSButton, button.title == "使用 iCloud 记住配置" { return button }
-        if let toggle = view as? NSSwitch { return toggle }
+        // The settings window also has shortcut and update switches. Read the actual
+        // iCloud action, rather than whichever switch happens to be first in the view tree.
+        if let toggle = view as? NSSwitch, toggle.action == NSSelectorFromString("toggleCloud") { return toggle }
         for child in view.subviews { if let found = cloudSwitch(in: child) { return found } }
         return nil
     }
