@@ -26,11 +26,11 @@ SwiftUI 界面；文档处理靠包内 Python 3.12，只在启动读操作列表
 
 ## 安装
 
-需要 **macOS 15 或更高版本、Apple Silicon Mac**。下载 `DocKit-v1.1.3-arm64.zip`，解压后把 `DocKit.app` 拖入「应用程序」。公开版 bundle ID 保持 `io.github.zengtianli.DocTools`，源码仓仍叫 doc-tools。
+需要 **macOS 15 或更高版本、Apple Silicon Mac**。从 GitHub Release 下载对应版本的 `DocKit-v<版本>-arm64.zip`，解压后把 `DocKit.app` 拖入「应用程序」。公开版 bundle ID 保持 `io.github.zengtianli.DocTools`，源码仓仍叫 doc-tools。
 
 发布包已经包含 Python 与文档依赖，常用操作不需要安装 uv、Python 或 Office，不需要账号，文件内容在本机处理。应用没有后台文档进程，执行任务时才启动引擎。
 
-目前可下载的 1.1.3 (37) 为 ad-hoc 签名，尚未经过 Apple 公证；之后的发行包一律用 Developer ID 签名并经 Apple 公证、装订票据，下载后直接打开，不需要下面的步骤。对 1.1.3 (37)：若首次打开被系统阻止，先尝试打开，再到「系统设置 → 隐私与安全性」点「仍要打开」。来源确认可信但仍显示损坏时，可在终端执行：
+旧版 1.1.3 (37) 为 ad-hoc 签名，未经过 Apple 公证；之后的发行包一律用 Developer ID 签名并经 Apple 公证、装订票据，下载后直接打开，不需要下面的步骤。仅对旧版 1.1.3 (37)：若首次打开被系统阻止，先尝试打开，再到「系统设置 → 隐私与安全性」点「仍要打开」。来源确认可信但仍显示损坏时，可在终端执行：
 
 ```sh
 xattr -cr "/Applications/DocKit.app"

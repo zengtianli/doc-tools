@@ -26,11 +26,11 @@ These historical measurements describe local acceptance build **1.1.3 (39)**. Gi
 
 ## Installation
 
-Requires **macOS 15 or later and an Apple Silicon Mac**. Download `DocKit-v1.1.3-arm64.zip`, extract it, and drag `DocKit.app` into Applications. The public bundle ID remains `io.github.zengtianli.DocTools`; the source repository is still named doc-tools.
+Requires **macOS 15 or later and an Apple Silicon Mac**. Download the matching `DocKit-v<version>-arm64.zip` from GitHub Release, extract it, and drag `DocKit.app` into Applications. The public bundle ID remains `io.github.zengtianli.DocTools`; the source repository is still named doc-tools.
 
 The release includes Python and document dependencies. Common operations require no uv, Python, or Office installation and no account; file contents are processed locally. The app has no background document process and starts the engine only while running a task.
 
-The downloadable 1.1.3 (37) is ad-hoc signed and has not been notarized by Apple; every later release is signed with a Developer ID, notarized by Apple and stapled, opens directly after download, and needs none of the steps below. For 1.1.3 (37): if macOS blocks the first launch, attempt to open it, then choose “Open Anyway” in System Settings → Privacy & Security. If you have verified the source but macOS still says the app is damaged, run this in Terminal:
+The older 1.1.3 (37) package is ad-hoc signed and has not been notarized by Apple; every later release is signed with a Developer ID, notarized by Apple and stapled, opens directly after download, and needs none of the steps below. Only for the older 1.1.3 (37): if macOS blocks the first launch, attempt to open it, then choose “Open Anyway” in System Settings → Privacy & Security. If you have verified the source but macOS still says the app is damaged, run this in Terminal:
 
 ```sh
 xattr -cr "/Applications/DocKit.app"
