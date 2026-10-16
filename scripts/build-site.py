@@ -120,7 +120,11 @@ if measured_build!=released_build and not historical:
                         " 的实测；公开下载仍为 "+html.escape(released_build)+
                         "，下列数据不代表已发布包。</p><div class='perf-grid'>",1)
 if historical:
-    block=block.replace("资源占用与响应速度。",f"历史实测 · v{measured_version}。").replace("数字来自所列设备实测，版本更新后重新测量。",f"以下为 v{measured_version} 的历史实测，不代表当前 v{release['version']}；本轮未重复采样。")
+    block=block.replace("资源占用与响应速度。",f"历史实测 · v{measured_version}。")
+    scope=("<p class='fine'>历史实测："+html.escape(measured_build)+
+           "；当前公开发行 "+html.escape(released_build)+
+           "。以下数据不代表当前发行包，本轮未重复采样。</p>")
+    block=block.replace("</h2>","</h2>"+scope,1)
 replacements={"VERSION":release["version"],"FILENAME":archive.name,"DOWNLOAD":html.escape(release_url,quote=True),
               "CHECKSUM":html.escape(checksum_url,quote=True),
               "SIZE":perf_block.size_mb(release["bytes"]),"LIGHT":block,"SCREENSHOT":shot,"VIDEOS":"".join(videos),"TUTORIAL":tutorial}

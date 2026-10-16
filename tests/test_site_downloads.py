@@ -78,6 +78,8 @@ class SiteDownloads(unittest.TestCase):
         measured = json.loads((ROOT / "perf/lightweight.json").read_text())["version"].split(" ")[0]
         if measured != self.release["version"]:
             self.assertIn("历史实测", self.page)
+            self.assertIn(f"当前公开发行 {self.release['version']} ({self.release['build']})", self.page)
+            self.assertIn("不代表当前发行包", self.page)
             facts = json.loads((SITE / "facts.json").read_text())
             self.assertEqual(facts["measurement_scope"], "historical measurement")
 
