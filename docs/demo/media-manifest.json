@@ -360,6 +360,20 @@
         "summary": "25/25 passed; 5 offscreen snapshots; normal view task, palette and document workflow"
       },
       "checked": "2026-10-05"
+    },
+    "1.1.4": {
+      "build": "60",
+      "release_sha256": "cde7496ff493555bb95d08a1095d2484fa81ddff69b11bb3d7d04bf41db76e29",
+      "ui_sources_sha256": "eab6b1887da23853c7b186077ae2aa8f488884e93621de340237ed5598716760",
+      "ui_changes": "新增配置与更新选项、可配置的应用内刷新快捷键、可选iCloud偏好迁移及其离屏自检；只修正测试探针对iCloud控件的定位，不改变演示覆盖的主视图、引号处理、格式转换和结果列表。旧视频不覆盖新增设置窗口与快捷键功能，保留原录制版本、来源及视频字节。",
+      "reason": "复用既有文档工作流演示，绑定已公证装订的真实1.1.4(60)发行包；原生主视图、palette、转换选择、虚构文档处理与结果绘制固定离屏验收25/25通过。设置/iCloud/快捷键/更新由真实已装版product_basics另验，不将旧录像或历史性能样本称为本版新录制/实测。",
+      "local_ui_validation": {
+        "check": "native_ui",
+        "input_sha256": "71ba78e9916fbe43b0a7774b622b8077362353780f186861e179d3dd2a0c79b4",
+        "evidence": "perf/acceptance/run-_sx5lol6/native_ui.json",
+        "summary": "25/25 passed; 5 offscreen snapshots; unchanged document workflow"
+      },
+      "checked": "2026-10-16"
     }
   }
 }

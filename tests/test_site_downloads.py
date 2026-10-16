@@ -70,6 +70,17 @@ class SiteDownloads(unittest.TestCase):
         self.assertEqual((facts["id"], facts["version"], str(facts["build"])),
                          ("doc-tools-oss", self.release["version"], str(self.release["build"])))
 
+    def test_installation_and_measurement_scope_match_real_release(self):
+        if "notarized by Apple; ticket stapled" in self.release.get("signing", ""):
+            self.assertIn("已经 Apple 公证", self.page)
+            self.assertNotIn("尚未经过 Apple 公证", self.page)
+            self.assertNotIn("xattr -cr", self.page)
+        measured = json.loads((ROOT / "perf/lightweight.json").read_text())["version"].split(" ")[0]
+        if measured != self.release["version"]:
+            self.assertIn("历史实测", self.page)
+            facts = json.loads((SITE / "facts.json").read_text())
+            self.assertEqual(facts["measurement_scope"], "historical measurement")
+
 
 if __name__ == "__main__":
     unittest.main()

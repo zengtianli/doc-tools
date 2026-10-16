@@ -99,4 +99,4 @@ bash scripts/check-ui-state.sh
 
 ## English
 
-DocKit is a native macOS document toolbox for Chinese typography, conversion, splitting and merging. It works on copies and preserves your original files. The release bundles its Python runtime and document dependencies, so supported local operations need no account, uv or Python installation. Requires Apple Silicon and macOS 15+. The downloadable 1.1.3 (37) is ad-hoc signed and not notarized; later releases are Developer ID signed and notarized. See the product website for installation, real demonstrations and supported formats.
+DocKit is a native macOS document toolbox for Chinese typography, conversion, splitting and merging. It works on copies and preserves your original files. The release bundles its Python runtime and document dependencies, so supported local operations need no account, uv or Python installation. Requires Apple Silicon and macOS 15+. The older 1.1.3 (37) package is ad-hoc signed and not notarized; later releases are Developer ID signed and notarized. See the product website for installation, real demonstrations and supported formats.

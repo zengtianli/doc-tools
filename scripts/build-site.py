@@ -5,7 +5,6 @@ import argparse
 import hashlib
 import html
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -111,7 +110,7 @@ if (media/"tutorial.mp4").is_file():
         if (media/name).is_file(): shutil.copy2(media/name,out/"media"/name)
     tutorial='<div class="demo-actions"><a class="text-link" href="media/tutorial.mp4" download>下载三段完整演示 ↓</a></div>'
 measured_version=json.loads((ROOT/"perf/lightweight.json").read_text())["version"].split(" ")[0]
-historical=measured_version!=release["version"] and os.environ.get("APP_RELEASE_KEEP_HISTORY")=="1"
+historical=measured_version!=release["version"]
 block=perf_block.standalone_section(ROOT/"perf/lightweight.json",measured_version,"#167e6d")
 measured_build=json.loads((ROOT/"perf/lightweight.json").read_text())["version"]
 released_build=f"{release['version']} ({release['build']})"
@@ -126,6 +125,13 @@ replacements={"VERSION":release["version"],"FILENAME":archive.name,"DOWNLOAD":ht
               "CHECKSUM":html.escape(checksum_url,quote=True),
               "SIZE":perf_block.size_mb(release["bytes"]),"LIGHT":block,"SCREENSHOT":shot,"VIDEOS":"".join(videos),"TUTORIAL":tutorial}
 page=(ROOT/"site/index.html").read_text()
+if "notarized by Apple; ticket stapled" in release.get("signing", ""):
+    page=page.replace("第一次打开时，允许运行", "双击打开 DocKit")
+    page=page.replace("此版本尚未经过 Apple 公证。如果 macOS 阻止打开，先尝试打开一次，再到「系统设置 → 隐私与安全性」找到 DocKit，点「仍要打开」。系统要求认证时，使用你自己的 Mac 登录密码或 Touch ID。",
+                      "当前发行包使用 Developer ID 签名，已经 Apple 公证并装订票据。解压后直接打开；首次运行时 macOS 可能询问是否打开从互联网下载的应用。")
+    page=page.replace("如果仍无法放行，可展开下方“提示应用已损坏或无法打开”查看处理办法。", "如提示文件损坏，请核对下方的来源与校验说明。")
+    page=page.replace('请先确认下载来源为本页，重新下载完整 zip 并移入「应用程序」。如果你确认来源可信，可以打开「终端」，执行这一行后再打开 DocKit：</p><pre><code>xattr -cr "/Applications/DocKit.app"</code></pre><p>这条命令只移除 DocKit 的下载隔离标记，不需要 sudo 或管理员密码。不要对不明来源应用执行此操作。',
+                      '请从本页指向的 GitHub Release 重新下载完整 ZIP，并与同一发行记录的 SHA-256 核对。当前包已经 Apple 公证；校验不符或系统仍拒绝时请保留错误信息并反馈，勿移除系统下载隔离标记。')
 for key,value in replacements.items(): page=page.replace("{{"+key+"}}",value)
 if "{{" in page: raise SystemExit("Unresolved website placeholders")
 (out/"index.html").write_text(page)
@@ -133,10 +139,10 @@ if "{{" in page: raise SystemExit("Unresolved website placeholders")
 facts=product_facts.from_repo(ROOT,product_id="doc-tools-oss",icon="images/icon.png")
 facts["measurement_version"]=measured_build
 if measured_build!=released_build:
-    facts["measurement_scope"]="local acceptance build"
+    facts["measurement_scope"]="historical measurement" if historical else "local acceptance build"
     facts["release_download_bytes"]=release["bytes"]
     facts["card_line"]=facts["card_line"].replace(">",
-                        ">本地验收构建 "+html.escape(measured_build)+" 实测 · ",1)
+                        ">"+("历史构建 " if historical else "本地验收构建 ")+html.escape(measured_build)+" 实测 · ",1)
     facts["card_text"]=product_facts.card_text(facts["card_line"])
 product_facts.write(out,facts)
 files=[{"path":str(p.relative_to(out)),"sha256":hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(out.rglob("*")) if p.is_file()]
