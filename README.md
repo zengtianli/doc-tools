@@ -1,3 +1,7 @@
+> **已退役（2026-10-22）**：DocKit 不再维护，功能已并入 Stemma。本仓库为只读存档。
+>
+> **Retired (2026-10-22):** DocKit is no longer maintained; its features have moved into Stemma. This repository is a read-only archive.
+
 # DocKit
 
 **中文** | [English](README_EN.md)
